@@ -1,43 +1,17 @@
-# obsidian-vue-starter
+# obsidian-sync-xlog
 
-A starter template for creating an Obsidian plugin with Vue.
+一个 obsidian 插件，可以把笔记同步到 xlog.app 上。
 
-# Features
+目前还在开发阶段，项目背景和设计可以参考 https://blog.ijust.cc/play-xlog-03
 
-This project comes preconfigured with [Typescript](https://www.typescriptlang.org/), [vite](https://vitejs.dev), and
-[Rollup.js](https://rollupjs.org).
+目前已实现功能：
 
-# Getting Started
+- [x] 完成设置面板
+- [x] 完成上传提示
+- [x] 完成新增和更新功能
+- [x] 更新信息同步回填到 frontMatter 中
+- [ ] md 中的 图片处理为 ipfs
 
-Click "use this template" to create your own fork of this repo. Make sure to reference the official sample plugin for
-information about how to get started with the Obsidian API and how to submit your plugin to the Community Plugin
-Gallery.
+## Copyright
 
-```bash
-# for local development
-npm install
-npm run dev
-// Or yarn dev
-
-# for a production bundle
-npm install
-npm run build
-// Or yarn build
-
-# change version
-npm bumpversion
-// Or yarn bumpversion
-```
-
-# Stats
-
-The production output of this sample plugin is ~10 KB.
-
-```
-./styles.css   0.44 KiB / gzip: 0.19 KiB
-./main.js      12.63 KiB / gzip: 3.70 KiB
-```
-
-## API Documentation
-
-See https://github.com/obsidianmd/obsidian-api
+MIT

@@ -1,140 +1,130 @@
-import {
-    App,
-    ItemView,
-    Platform,
-    Plugin,
-    PluginSettingTab,
-    Setting,
-    WorkspaceLeaf,
-} from "obsidian";
-import { createApp, type ComponentPublicInstance } from "vue";
-
-import DemoVue from "./ui/test.vue";
-
-const VIEW_TYPE = "vue-view";
+import { App, Modal, Plugin, PluginSettingTab, TFile, TFolder } from "obsidian";
+import { createApp, type App as VueApp } from "vue";
+import SettingsPage from "./ui/settings.vue";
+import PublishModal from "./ui/publishModal.vue";
+import { useObsidianFrontmatter } from "./utils";
 
 // Remember to rename these classes and interfaces!
 
-interface MyPluginSettings {
-    mySetting: string;
-}
-
-const DEFAULT_SETTINGS: MyPluginSettings = {
-    mySetting: "这是默认值",
-};
-
-class MyVueView extends ItemView {
-    view!: ComponentPublicInstance;
-
-    getViewType(): string {
-        return VIEW_TYPE;
-    }
-
-    getDisplayText(): string {
-        return "Dice Roller";
-    }
-
-    getIcon(): string {
-        return "dice";
-    }
-
-    async onOpen(): Promise<void> {
-        const app = createApp(DemoVue).mount(this.contentEl);
-        this.view = app;
-    }
-}
-
 // 核心
-export default class MyPlugin extends Plugin {
-    private view!: MyVueView;
-    settings!: MyPluginSettings;
+export default class SyncToXlogPlugin extends Plugin {
+  async onload() {
+    const settingTab = new SampleSettingTab(this.app, this);
+    this.addSettingTab(settingTab);
 
-    async onload() {
-        await this.loadSettings();
-
-        this.registerView(
-            VIEW_TYPE,
-            (leaf: WorkspaceLeaf) => (this.view = new MyVueView(leaf))
-        );
-
-        this.app.workspace.onLayoutReady(this.onLayoutReady.bind(this));
-
-        // This creates an icon in the left ribbon.
-        this.addRibbonIcon("dice", "悬浮展示1", (evt: MouseEvent) =>
-            this.openMapView()
-        );
-
-        // 在这里注册命令 This adds a simple command that can be triggered anywhere
-        this.addCommand({
-            id: "xxx-id",
-            name: "注册命令中文名",
-            callback: () => this.openMapView(),
-        });
-        // This adds a settings tab so the user can configure various aspects of the plugin
-        this.addSettingTab(new SampleSettingTab(this.app, this));
-    }
-
-    onLayoutReady(): void {
-        if (this.app.workspace.getLeavesOfType(VIEW_TYPE).length) {
+    // 左侧 sidebar 具体文件单击右键
+    {
+      this.registerEvent(
+        this.app.workspace.on("file-menu", (menu, file) => {
+          if (file instanceof TFolder) {
+            // 一定进不来，为了 ts 不报错
+            console.log("It's a folder!", file);
             return;
-        }
-        this.app.workspace.getRightLeaf(false).setViewState({
-            type: VIEW_TYPE,
-        });
-    }
+          }
 
-    onunload() {}
+          if (file instanceof TFile) {
+            // console.log("It's a file!");
 
-    async loadSettings() {
-        this.settings = Object.assign(
-            {},
-            DEFAULT_SETTINGS,
-            await this.loadData()
-        );
-    }
+            const isImg = ["png", "jpg", "jpeg", "gif"].includes(
+              file.extension
+            );
 
-    async saveSettings() {
-        await this.saveData(this.settings);
+            if (isImg) {
+              // menu.addItem((item) => {
+              //     item.setTitle("3图片处理").onClick(async () => {
+              //         console.log("是图片", file);
+              //         const content = await file.vault.cachedRead(
+              //             file
+              //         );
+              //         console.log(content);
+              //     });
+              // });
+            } else {
+              menu.addItem((item) => {
+                item.setTitle("上传到文件到 xlog").onClick(async () => {
+                  new MyPublishModal(this.app, this, file).open();
+                });
+              });
+            }
+          }
+        })
+      );
     }
+  }
 
-    async openMapView() {
-        const workspace = this.app.workspace;
-        workspace.detachLeavesOfType(VIEW_TYPE);
-        const leaf = workspace.getLeaf(
-            // @ts-ignore
-            !Platform.isMobile
-        );
-        await leaf.setViewState({ type: VIEW_TYPE });
-        workspace.revealLeaf(leaf);
-    }
+  onunload() {}
 }
 
+/**
+ * 添加 设置面板
+ */
 class SampleSettingTab extends PluginSettingTab {
-    plugin: MyPlugin;
+  plugin: SyncToXlogPlugin;
+  _vueApp: VueApp | undefined;
 
-    constructor(app: App, plugin: MyPlugin) {
-        super(app, plugin);
-        this.plugin = plugin;
+  constructor(app: App, plugin: SyncToXlogPlugin) {
+    super(app, plugin);
+    this.plugin = plugin;
+  }
+
+  display(): void {
+    console.log("open设置面板", this.plugin);
+    const _app = createApp(SettingsPage, {
+      plugin: this.plugin,
+    });
+    this._vueApp = _app;
+    _app.mount(this.containerEl);
+  }
+  hide() {
+    // 好像不能保留实例
+    console.log("close设置面板");
+    // this.containerEl
+    if (this._vueApp) {
+      console.log("un mount");
+      this._vueApp.unmount();
     }
+    this.containerEl.empty();
+  }
+}
 
-    display(): void {
-        const { containerEl } = this;
+/**
+ * 第一次上传需要添加默认值
+ */
 
-        containerEl.empty();
+export class MyPublishModal extends Modal {
+  _vueApp: VueApp | undefined;
+  plugin: SyncToXlogPlugin;
 
-        containerEl.createEl("h2", { text: "这是一个 h2 标题" });
+  file: TFile;
 
-        new Setting(containerEl)
-            .setName("label1")
-            .setDesc("desc1")
-            .addText((text) =>
-                text
-                    .setPlaceholder("默认暗文")
-                    .setValue(this.plugin.settings.mySetting)
-                    .onChange(async (value) => {
-                        this.plugin.settings.mySetting = value;
-                        await this.plugin.saveSettings();
-                    })
-            );
+  constructor(app: App, plugin: SyncToXlogPlugin, file: TFile) {
+    super(app);
+    this.plugin = plugin;
+    this.file = file;
+  }
+
+  onOpen() {
+    const { addOrUpdateFrontMatter, currentFrontMatter } =
+      useObsidianFrontmatter(this.file, this.app);
+
+    //  console.log("open设置面板", this.plugin);
+    const _app = createApp(PublishModal, {
+      plugin: this.plugin,
+      modal: this,
+      file: this.file,
+      addOrUpdateFrontMatter,
+      currentFrontMatter,
+    });
+    this._vueApp = _app;
+    _app.mount(this.containerEl);
+  }
+
+  onClose() {
+    // 好像不能保留实例
+    // this.containerEl
+    if (this._vueApp) {
+      this._vueApp.unmount();
     }
+    this.containerEl.empty();
+  }
 }

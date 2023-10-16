@@ -1,10 +1,10 @@
 {
-    "id": "obsidian-vue-starter",
-    "name": "Vue Starter",
-    "version": "1.0.0",
+    "id": "obsidian-sync-xlog",
+    "name": "Obsidian Sync Xlog",
+    "version": "0.0.1",
     "minAppVersion": "0.12.0",
-    "description": "A plugin development template for devs who want to use vue in Obsidian.",
-    "author": "Quorafind",
+    "description": "A plugin let you sync your obsidian vault with xlog",
+    "author": "Otto-J@github",
     "authorUrl": "https://github.com/otto-j",
     "isDesktopOnly": false
 }
