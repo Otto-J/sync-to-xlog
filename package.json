@@ -1,0 +1,37 @@
+{
+    "name": "obsidian-vue-starter",
+    "version": "1.0.0",
+    "description": "A plugin development template for devs who want to use vue in Obsidian.",
+    "main": "main.js",
+    "scripts": {
+        "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
+        "type-check": "vue-tsc --noEmit -p tsconfig.app.json --composite false",
+        "dev": "npm run lint && vite build --watch",
+        "build": "npm run type-check && vite build",
+        "format": "prettier --write src/",
+        "bumpversion": "node version-bump.mjs && git add manifest.json versions.json"
+    },
+    "keywords": [],
+    "author": "Otto",
+    "devDependencies": {
+        "@rushstack/eslint-patch": "^1.2.0",
+        "@tsconfig/node18": "^2.0.1",
+        "@types/node": "^18.16.8",
+        "@typescript-eslint/eslint-plugin": "5.32.0",
+        "@typescript-eslint/parser": "5.32.0",
+        "@vitejs/plugin-vue": "^4.2.3",
+        "@vue/eslint-config-prettier": "^7.1.0",
+        "@vue/eslint-config-typescript": "^11.0.3",
+        "@vue/tsconfig": "^0.4.0",
+        "builtin-modules": "3.3.0",
+        "eslint": "^8.39.0",
+        "eslint-plugin-vue": "^9.11.0",
+        "obsidian": "latest",
+        "prettier": "^2.8.8",
+        "tslib": "2.4.0",
+        "typescript": "4.7.4",
+        "vite": "^4.4.9",
+        "vue": "^3.3.4",
+        "vue-tsc": "^1.8.10"
+    }
+}
