@@ -7,12 +7,13 @@
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
     "type-check": "vue-tsc --noEmit -p tsconfig.app.json --composite false",
     "dev": "npm run lint && vite build --watch",
-    "build": "npm run type-check && vite build && cp manifest.json dist",
+    "build": "npm run type-check && vite build ",
     "format": "prettier --write src/",
     "bumpversion": "node version-bump.mjs && git add manifest.json versions.json"
   },
   "keywords": [],
   "author": "Otto",
+  "homepage": "https://github.com/Otto-J/Obsidian-sync-xlog",
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.2.0",
     "@tsconfig/node18": "^2.0.1",
