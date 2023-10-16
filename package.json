@@ -1,15 +1,16 @@
 {
   "name": "obsidian-sync-xlog",
-  "version": "1.0.0",
+  "version": "0.0.2",
   "description": "A plugin for Obsidian.md to sync xlog.app",
   "main": "main.js",
   "scripts": {
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
     "type-check": "vue-tsc --noEmit -p tsconfig.app.json --composite false",
     "dev": "npm run lint && vite build --watch",
-    "build": "npm run type-check && vite build ",
+    "build": "npm run type-check && vite build && cp manifest.json dist ",
     "format": "prettier --write src/",
-    "bumpversion": "node version-bump.mjs && git add manifest.json versions.json"
+    "bumpversion": "node version-bump.mjs && git add manifest.json versions.json",
+    "pub": "zip -r dist.zip dist && gh release create 0.0.2 dist.zip "
   },
   "keywords": [],
   "author": "Otto",
