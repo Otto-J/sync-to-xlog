@@ -1,4 +1,4 @@
-# obsidian-sync-xlog
+# Sync To Xlog
 
 一个 obsidian 插件，可以把笔记同步到 xlog.app 上。
 
