@@ -290,6 +290,9 @@ const handleUpdatePost = async ({
     content = await handleUpload(baseInfo.content, props.file);
   }
 
+  // console.log("final-content", content);
+  // return false;
+
   return http
     .request({
       method: "post",
@@ -424,12 +427,10 @@ const startUpload = async () => {
     slug: config.value.slug,
     noteID: config.value.noteId,
   };
-  console.log("4,current config", currentConfig.content);
+  // console.log("4,current config", currentConfig.content);
   // 1. 上传
   await handleSubmit(currentConfig);
   isLoading.value = false;
-
-  // 2. 回填 front-matter
 };
 </script>
 <style scoped>

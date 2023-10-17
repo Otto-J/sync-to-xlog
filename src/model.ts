@@ -68,8 +68,21 @@ const handleLocalUrl = async (url: string, file: TFile) => {
   console.log("handleLocalUrl--", url);
   // 这里需要调用 obsidian 的 api 来读取文件
   try {
+    // 如果url 包含空格做提示
+    if (url.includes(" ")) {
+      new Notice(
+        `Failed upload ${url}, 文件路径不能包含空格，可能会导致上传失败`
+      );
+    }
+    // 如果url不包含 / 做提示
+    if (!url.includes("/")) {
+      new Notice(`Failed upload ${url}, 文件路径不包含 /，可能会导致上传失败`);
+    }
+
     const _file = await file.vault.getAbstractFileByPath(url);
     if (!_file || !(_file instanceof TFile)) {
+      console.log("文件不存在", _file);
+      new Notice(`Failed upload ${url}, 文件不存在`);
       return;
     }
     // console.log(9, _file, _file.extension, _file.basename);
@@ -129,7 +142,7 @@ export const handleMarkdownImageToXlog = async (
             // ob 图片
             return await handleLocalUrl(obUrl, file);
           } else {
-            console.log("匹配失败");
+            console.log("匹配失败", match);
           }
         }
       })
