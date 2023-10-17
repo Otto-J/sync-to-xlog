@@ -30,7 +30,7 @@
     <div class="setting-item-control">
       <input
         v-model="settings.token"
-        type="text"
+        type="password"
         placeholder="请输入 token"
         spellcheck="false"
         tabindex="2"

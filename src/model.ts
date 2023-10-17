@@ -11,7 +11,7 @@ export const defaultSettings = () => ({
   token: "",
   charactorID: "",
   autoUpload: true,
-  debugger: true,
+  debugger: false,
   isMultiCharactor: false,
   charactorList: [] as Array<{ name: string; value: string }>,
 });
