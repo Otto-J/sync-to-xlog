@@ -21,9 +21,9 @@
   <!-- username -->
   <div class="setting-item">
     <div class="setting-item-info">
-      <div class="setting-item-name">xlog siwe token</div>
+      <div class="setting-item-name">XLOG SIWE Token</div>
       <div class="setting-item-description">
-        如不清楚 token 请访问
+        如不清楚 Token 请访问
         <a tabindex="1" href="https://blog.ijust.cc/play-xlog-02">获取帮助</a>
       </div>
     </div>
@@ -72,8 +72,10 @@
   <!-- need ipfs auto upload -->
   <div class="setting-item mod-toggle">
     <div class="setting-item-info">
-      <div class="setting-item-name">是否开启图片自动上传</div>
-      <div class="setting-item-description">若关闭插件不处理图片</div>
+      <div class="setting-item-name">上传是否修改图片为 IPFS</div>
+      <div class="setting-item-description">
+        在 XLOG 上是否使用 IPFS 协议展示图片等资源，上传时可单独设置
+      </div>
     </div>
     <div class="setting-item-control">
       <div

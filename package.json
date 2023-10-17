@@ -37,6 +37,7 @@
     "vue-tsc": "^1.8.10"
   },
   "dependencies": {
-    "axios": "^1.5.1"
+    "axios": "^1.5.1",
+    "file-type": "^18.5.0"
   }
 }

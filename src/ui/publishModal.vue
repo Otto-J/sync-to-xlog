@@ -70,6 +70,24 @@
           />
         </div>
       </div>
+      <!-- image upload -->
+      <div class="setting-item">
+        <div class="setting-item-info">
+          <div class="setting-item-name">图片链接是否修改为 ipfs</div>
+          <div class="setting-item-description">
+            开启后会将图片链接修改为 IPFS 协议，Obsidian
+            本地笔记不会被修改，也会稍微增加上传的耗时。
+          </div>
+        </div>
+        <div class="setting-item-control">
+          <div
+            class="checkbox-container"
+            :class="config.uploadIPFS ? 'is-enabled' : ''"
+          >
+            <input type="checkbox" v-model="config.uploadIPFS" tabindex="2" />
+          </div>
+        </div>
+      </div>
       <!-- noteId -->
       <div class="setting-item">
         <div class="setting-item-info">
@@ -90,7 +108,9 @@
       </div>
     </div>
     <div class="modal-button-container">
-      <button class="mod-cta" @click="startUpload">开始上传</button>
+      <button class="mod-cta" @click="startUpload">
+        {{ isLoading ? "正在上传" : "开始上传" }}
+      </button>
       <button @click="closeModal">取消</button>
     </div>
   </div>
@@ -99,7 +119,7 @@
 import { onMounted, reactive, ref } from "vue";
 import type SyncToXlogPlugin from "@/starterIndex";
 import { Notice, type Modal, TFile } from "obsidian";
-import { defaultSettings, http } from "../model";
+import { defaultSettings, handleMarkdownImageToXlog, http } from "../model";
 
 const props = withDefaults(
   defineProps<{
@@ -116,12 +136,15 @@ const props = withDefaults(
   }
 );
 
+const isLoading = ref(false);
+
 const defaultConfig = () => ({
   title: "",
   noteId: "",
   summary: "",
   rawTags: "",
   slug: "",
+  uploadIPFS: true,
 });
 
 const config = ref(defaultConfig());
@@ -131,24 +154,36 @@ const closeModal = () => {
   props.modal?.close();
 };
 
+// 弹窗表单
 const baseInfo = reactive({
   title: "",
   content: "",
   frontMatter: {} as any,
 });
 
+// 系统设置
 let settings: Partial<ReturnType<typeof defaultSettings>> = {};
 
-onMounted(async () => {
-  settings = await props.plugin?.loadData();
+// 检查插件设置是否正确
+const checkSettingValidate = (settings: any) => {
+  let validate = false;
+
   if (!settings.enable) {
     new Notice("xlog 上传插件未启用");
-    return;
+
+    return validate;
   }
   if (!settings.token || !settings.charactorID) {
     new Notice("xlog 上传插件未配置用户信息");
-    return;
+    return validate;
   }
+
+  validate = true;
+  return validate;
+};
+
+// 处理 baseInfo 和 config
+const handleCurrentInfo = async () => {
   // console.log("setting", settings);
   baseInfo.title = props.file.basename;
   baseInfo.content = await props.file.vault.cachedRead(props.file);
@@ -162,9 +197,20 @@ onMounted(async () => {
 
   // noteID
   config.value.noteId = baseInfo.frontMatter?.noteId_x || "";
+};
+
+onMounted(async () => {
+  settings = await props.plugin?.loadData();
+  const validate = checkSettingValidate(settings);
+  if (!validate) {
+    return;
+  }
+  config.value.uploadIPFS = settings.autoUpload || false;
+
+  await handleCurrentInfo();
 });
 
-const handleCreatePost = ({
+const handleCreatePost = async ({
   token = "",
   title = "",
   content = "",
@@ -175,6 +221,11 @@ const handleCreatePost = ({
 }) => {
   console.log("handle create post");
   const url = `/v1/siwe/contract/characters/${charactorID}/notes`;
+
+  if (config.value.uploadIPFS) {
+    // 上传图片到 ipfs
+    content = await handleUpload(baseInfo.content, props.file);
+  }
 
   return http
     .request({
@@ -220,7 +271,7 @@ const handleCreatePost = ({
       return null;
     });
 };
-const handleUpdatePost = ({
+const handleUpdatePost = async ({
   token = "",
   title = "",
   content = "",
@@ -233,6 +284,11 @@ const handleUpdatePost = ({
   console.log("handle update post");
   const url = `/v1/siwe/contract/characters/${charactor}/notes/${noteId}/metadata`;
   const mode = "replace"; //'merge'
+
+  if (config.value.uploadIPFS) {
+    // 上传图片到 ipfs
+    content = await handleUpload(baseInfo.content, props.file);
+  }
 
   return http
     .request({
@@ -289,7 +345,7 @@ const handleSubmit = async ({
 }) => {
   let numberNoteID = Number(noteID);
   const hasNoteID = !Number.isNaN(numberNoteID);
-  console.log("3", hasNoteID && numberNoteID > 0);
+  // console.log("3", hasNoteID && numberNoteID > 0);
   const isUpdate = hasNoteID && numberNoteID > 0;
   if (isUpdate) {
     // 走更新
@@ -337,7 +393,20 @@ const handleSubmit = async ({
 
   closeModal();
 };
+
+const handleUpload = async (content: string, file: TFile) => {
+  const finalContent = await handleMarkdownImageToXlog(content, file);
+
+  // console.log("final content", finalContent);
+  return finalContent;
+};
+
 const startUpload = async () => {
+  if (isLoading.value) {
+    new Notice("正在上传中");
+    return;
+  }
+  isLoading.value = true;
   let tags = config.value.rawTags.split(/[,，]/);
   // 转 set 去重
   tags = Array.from(new Set(tags)).filter((i) => i);
@@ -355,12 +424,17 @@ const startUpload = async () => {
     slug: config.value.slug,
     noteID: config.value.noteId,
   };
-  console.log("4,current config", currentConfig);
+  console.log("4,current config", currentConfig.content);
   // 1. 上传
-  handleSubmit(currentConfig);
+  await handleSubmit(currentConfig);
+  isLoading.value = false;
 
   // 2. 回填 front-matter
 };
 </script>
-
-<style></style>
+<style scoped>
+input[type="checkbox"] {
+  width: 100%;
+  height: 100%;
+}
+</style>

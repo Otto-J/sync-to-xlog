@@ -3,6 +3,7 @@ import { createApp, type App as VueApp } from "vue";
 import SettingsPage from "./ui/settings.vue";
 import PublishModal from "./ui/publishModal.vue";
 import { useObsidianFrontmatter } from "./utils";
+import { handleMarkdownImageToXlog } from "./model";
 
 // Remember to rename these classes and interfaces!
 
@@ -25,20 +26,12 @@ export default class SyncToXlogPlugin extends Plugin {
           if (file instanceof TFile) {
             // console.log("It's a file!");
 
-            const isImg = ["png", "jpg", "jpeg", "gif"].includes(
+            const isImg = ["png", "jpg", "jpeg", "gif", "webp"].includes(
               file.extension
             );
 
             if (isImg) {
-              // menu.addItem((item) => {
-              //     item.setTitle("3图片处理").onClick(async () => {
-              //         console.log("是图片", file);
-              //         const content = await file.vault.cachedRead(
-              //             file
-              //         );
-              //         console.log(content);
-              //     });
-              // });
+              // 暂不处理
             } else {
               menu.addItem((item) => {
                 item.setTitle("上传到文件到 xlog").onClick(async () => {
@@ -68,7 +61,7 @@ class SampleSettingTab extends PluginSettingTab {
   }
 
   display(): void {
-    console.log("open设置面板", this.plugin);
+    // console.log("open设置面板", this.plugin);
     const _app = createApp(SettingsPage, {
       plugin: this.plugin,
     });
@@ -76,9 +69,6 @@ class SampleSettingTab extends PluginSettingTab {
     _app.mount(this.containerEl);
   }
   hide() {
-    // 好像不能保留实例
-    console.log("close设置面板");
-    // this.containerEl
     if (this._vueApp) {
       console.log("un mount");
       this._vueApp.unmount();
@@ -90,7 +80,6 @@ class SampleSettingTab extends PluginSettingTab {
 /**
  * 第一次上传需要添加默认值
  */
-
 export class MyPublishModal extends Modal {
   _vueApp: VueApp | undefined;
   plugin: SyncToXlogPlugin;
@@ -120,8 +109,6 @@ export class MyPublishModal extends Modal {
   }
 
   onClose() {
-    // 好像不能保留实例
-    // this.containerEl
     if (this._vueApp) {
       this._vueApp.unmount();
     }

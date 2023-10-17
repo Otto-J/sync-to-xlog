@@ -27,7 +27,8 @@ export default defineConfig(() => {
       rollupOptions: {
         output: {
           // Overwrite default Vite output fileName
-          dir: "./dist",
+          // if dev
+          // dir: "./dist",
           entryFileNames: "main.js",
           assetFileNames: "styles.css",
         },
