@@ -1,13 +1,13 @@
 {
   "name": "sync-to-xlog",
-  "version": "0.0.2",
+  "version": "0.0.4",
   "description": "A plugin for Obsidian.md to sync xlog.app",
   "main": "main.js",
   "scripts": {
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
     "type-check": "vue-tsc --noEmit -p tsconfig.app.json --composite false",
     "dev": "npm run lint && vite build --watch",
-    "build": "npm run type-check && vite build && cp manifest.json dist ",
+    "build": "npm run type-check && vite build  ",
     "format": "prettier --write src/",
     "bumpversion": "node version-bump.mjs && git add manifest.json versions.json",
     "pub": "zip -r dist.zip main.js manifest.json styles.css && gh release create 0.0.3 main.js styles.css manifest.json dist.zip "
