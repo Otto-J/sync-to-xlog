@@ -18,16 +18,23 @@ export const useObsidianFrontmatter = (file: TFile, app: App) => {
     const newFrontMatter = `---\n${stringifyYaml({
       ...currentFrontMatter,
       ...obj,
-    })}\n---`;
+    })}\n---\n`;
 
-    const { frontmatterPosition } = fileCache;
+    // const { frontmatterPosition } = fileCache;
     const fileContents = await app.vault.read(file);
 
-    // 如果文件没有 Frontmatter，直接返回
-    if (!frontmatterPosition) {
-      new Notice("文件匹配 frontMatter 失败");
-      return;
-    }
+    const frontmatterPosition = fileCache.frontmatterPosition ?? {
+      start: {
+        line: 0,
+        col: 0,
+        offset: 0,
+      },
+      end: {
+        line: 0,
+        col: 0,
+        offset: 0,
+      },
+    };
 
     // 这里逻辑比较绕，目的是重写文件内容，后面如果有 api 可能就一行代码解决了，类似 metadataCache.update
     const {

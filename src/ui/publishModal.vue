@@ -4,12 +4,10 @@
     <div class="modal-close-button" @click="closeModal"></div>
     <div class="modal-title">文章上传设置</div>
     <div class="modal-content">
-      <p>上传文件到 xlog 需要添加相关配置，不填写执行默认设置</p>
-      <!-- <div>{{ config }}</div> -->
       <!-- title -->
       <div class="setting-item">
         <div class="setting-item-info">
-          <div class="setting-item-name">title</div>
+          <div class="setting-item-name">标题 Title</div>
           <div class="setting-item-description">默认读取当前标题</div>
         </div>
         <div class="setting-item-control">
@@ -25,7 +23,7 @@
       <!-- slug -->
       <div class="setting-item">
         <div class="setting-item-info">
-          <div class="setting-item-name">Slug</div>
+          <div class="setting-item-name">路径 Slug</div>
           <div class="setting-item-description">留空默认分配</div>
         </div>
         <div class="setting-item-control">
@@ -41,7 +39,7 @@
       <!-- summary -->
       <div class="setting-item">
         <div class="setting-item-info">
-          <div class="setting-item-name">摘要 Summary</div>
+          <div class="setting-item-name">摘要 Description</div>
           <div class="setting-item-description">留空默认分配</div>
         </div>
         <div class="setting-item-control">
@@ -57,7 +55,7 @@
       <!-- tags -->
       <div class="setting-item">
         <div class="setting-item-info">
-          <div class="setting-item-name">Tags</div>
+          <div class="setting-item-name">标签 Tags</div>
           <div class="setting-item-description">使用中英文逗号分割</div>
         </div>
         <div class="setting-item-control">
@@ -73,10 +71,11 @@
       <!-- image upload -->
       <div class="setting-item">
         <div class="setting-item-info">
-          <div class="setting-item-name">图片链接是否修改为 ipfs</div>
+          <div class="setting-item-name">
+            图片是否上传到 IPFS Upload Image to IPFS
+          </div>
           <div class="setting-item-description">
-            开启后会将图片链接修改为 IPFS 协议，Obsidian
-            本地笔记不会被修改，也会稍微增加上传的耗时。
+            将图片上传至 IPFS，不影响本地笔记，也会稍微增加上传的耗时。
           </div>
         </div>
         <div class="setting-item-control">
@@ -84,16 +83,49 @@
             class="checkbox-container"
             :class="config.uploadIPFS ? 'is-enabled' : ''"
           >
-            <input type="checkbox" v-model="config.uploadIPFS" tabindex="2" />
+            <input
+              type="checkbox"
+              style="width: 100%; height: 100%"
+              v-model="config.uploadIPFS"
+              tabindex="2"
+            />
           </div>
+        </div>
+      </div>
+      <!-- 发布日期 -->
+      <div class="setting-item">
+        <div class="setting-item-info">
+          <div class="setting-item-name">发布日期 Publish Time</div>
+          <div class="setting-item-description">
+            默认读取 publish_time，留空表示当前日期。
+            <br />
+            支持格式
+            <b class="u-pop">YYYY/MM/DD HH:mm:ss</b>
+          </div>
+        </div>
+        <div class="setting-item-control">
+          <!-- checkbox -->
+          <select v-model="config.publishTimeMode" class="dropdown">
+            <option value="current">使用当前时间</option>
+            <option value="create_time">使用 create_time</option>
+            <option value="custom">自定义</option>
+          </select>
+          <input
+            :disabled="config.publishTimeMode !== 'custom'"
+            type="text"
+            placeholder="留空表示当前时间"
+            v-model="config.publish_time"
+            spellcheck="false"
+            tabindex="3"
+          />
         </div>
       </div>
       <!-- noteId -->
       <div class="setting-item">
         <div class="setting-item-info">
-          <div class="setting-item-name">关联NoteID</div>
+          <div class="setting-item-name">关联 NoteID</div>
           <div class="setting-item-description">
-            如果要更新现有文章，请填写，否则视为新建文章
+            若填写视为更新文章，留空视为创建文章
           </div>
         </div>
         <div class="setting-item-control">
@@ -116,7 +148,7 @@
   </div>
 </template>
 <script lang="ts" setup>
-import { onMounted, reactive, ref } from "vue";
+import { computed, nextTick, onMounted, reactive, ref, watchEffect } from "vue";
 import type SyncToXlogPlugin from "@/starterIndex";
 import { Notice, type Modal, TFile } from "obsidian";
 import { defaultSettings, handleMarkdownImageToXlog, http } from "../model";
@@ -144,6 +176,8 @@ const defaultConfig = () => ({
   summary: "",
   rawTags: "",
   slug: "",
+  publish_time: "",
+  publishTimeMode: "current" as "current" | "create_time" | "custom",
   uploadIPFS: true,
 });
 
@@ -184,7 +218,6 @@ const checkSettingValidate = (settings: any) => {
 
 // 处理 baseInfo 和 config
 const handleCurrentInfo = async () => {
-  // console.log("setting", settings);
   baseInfo.title = props.file.basename;
   baseInfo.content = await props.file.vault.cachedRead(props.file);
   baseInfo.frontMatter = props.currentFrontMatter();
@@ -199,6 +232,11 @@ const handleCurrentInfo = async () => {
   config.value.noteId = baseInfo.frontMatter?.noteId_x || "";
 };
 
+// 兼容不填写 create_time 的情况
+const ctime = computed(
+  () => baseInfo.frontMatter?.create_time ?? props.file?.stat?.ctime
+);
+
 onMounted(async () => {
   settings = await props.plugin?.loadData();
   const validate = checkSettingValidate(settings);
@@ -208,6 +246,27 @@ onMounted(async () => {
   config.value.uploadIPFS = settings.autoUpload || false;
 
   await handleCurrentInfo();
+
+  // 如果当前 fm 中有 publish_time 设置 timeMode=custom,并设置
+  if (baseInfo.frontMatter?.publish_time) {
+    config.value.publishTimeMode = "custom";
+    nextTick(() => {
+      config.value.publish_time = baseInfo.frontMatter.publish_time;
+    });
+  }
+});
+
+watchEffect(() => {
+  if (config.value.publishTimeMode === "create_time") {
+    const current = new Date(ctime.value).toLocaleString();
+    config.value.publish_time = current;
+  } else if (config.value.publishTimeMode === "current") {
+    config.value.publish_time = new Date().toLocaleString();
+  } else if (config.value.publishTimeMode === "custom") {
+    config.value.publish_time = "";
+  } else {
+    console.log("未尽事宜", config.value.publishTimeMode);
+  }
 });
 
 const handleCreatePost = async ({
@@ -242,6 +301,8 @@ const handleCreatePost = async ({
           content: content,
           summary: summary,
           sources: ["xlog"],
+          // 发布日期
+          date_published: new Date(config.value.publish_time).toISOString(),
           attributes: [
             {
               value: slug,
@@ -291,6 +352,7 @@ const handleUpdatePost = async ({
   }
 
   // console.log("final-content", content);
+  // console.log(new Date(config.value.publish_time).toISOString());
   // return false;
 
   return http
@@ -308,6 +370,7 @@ const handleUpdatePost = async ({
           content: content,
           summary: summary,
           sources: ["xlog"],
+          date_published: new Date(config.value.publish_time).toISOString(),
           attributes: [
             {
               value: slug,
@@ -350,6 +413,12 @@ const handleSubmit = async ({
   const hasNoteID = !Number.isNaN(numberNoteID);
   // console.log("3", hasNoteID && numberNoteID > 0);
   const isUpdate = hasNoteID && numberNoteID > 0;
+
+  // 如果发布时间是自定义，但是内容为空，设置当前时间
+  if (config.value.publishTimeMode === "custom" && !config.value.publish_time) {
+    config.value.publish_time = new Date().toLocaleString();
+  }
+
   if (isUpdate) {
     // 走更新
     const res = await handleUpdatePost({
@@ -390,8 +459,9 @@ const handleSubmit = async ({
     tags: tags.filter((i) => i !== "post"),
     noteId_x: numberNoteID,
 
-    update_time: new Date().toLocaleString(),
     create_time: new Date(props.file.stat.ctime).toLocaleString(),
+    update_time: new Date().toLocaleString(),
+    publish_time: config.value.publish_time,
   });
 
   closeModal();
@@ -433,9 +503,3 @@ const startUpload = async () => {
   isLoading.value = false;
 };
 </script>
-<style scoped>
-input[type="checkbox"] {
-  width: 100%;
-  height: 100%;
-}
-</style>
