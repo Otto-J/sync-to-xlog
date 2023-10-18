@@ -134,7 +134,7 @@ export const handleMarkdownImageToXlog = async (
         // console.log("match", match);
         // 通过 match 来判断符合标准
         if (match) {
-          const [raw, alt, url, obUrl] = match;
+          const [, alt, url, obUrl] = match;
           if (url) {
             // http 图片
             return await handleRemoteUrl(alt, url);

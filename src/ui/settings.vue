@@ -124,21 +124,6 @@ const props = withDefaults(
 
 const settings = ref(defaultSettings());
 
-// sync to xlog 插件内 默认在 console 第一项
-
-const log = settings.value.debugger
-  ? (...args: any[]) => {
-      console.log("sync to xlog 插件内");
-    }
-  : () => {};
-
-const loadUserSeeting = async (_this: SyncToXlogPlugin) => {
-  const userSetting = await _this.loadData();
-
-  console.log("user setting", userSetting);
-  return userSetting;
-};
-
 const save = async () => {
   const newSeeting = {
     // ...currentSetting.value,

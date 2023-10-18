@@ -3,7 +3,6 @@ import { createApp, type App as VueApp } from "vue";
 import SettingsPage from "./ui/settings.vue";
 import PublishModal from "./ui/publishModal.vue";
 import { useObsidianFrontmatter } from "./utils";
-import { handleMarkdownImageToXlog } from "./model";
 
 // Remember to rename these classes and interfaces!
 
@@ -34,7 +33,7 @@ export default class SyncToXlogPlugin extends Plugin {
               // 暂不处理
             } else {
               menu.addItem((item) => {
-                item.setTitle("上传到文件到 xlog").onClick(async () => {
+                item.setTitle("上传此文件到 xlog").onClick(async () => {
                   new MyPublishModal(this.app, this, file).open();
                 });
               });
