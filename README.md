@@ -15,6 +15,26 @@ An Obsidian plugin that syncs notes to xlog.app.
 
 ## 使用方式
 
+### BRAT 安装
+
+经过热心的朋友提醒，obsidian 里有个 brat 插件，类似 iOS 里的 testFlight，可以分发测试插件。
+
+打开设置 - 第三方插件 - 浏览 - 搜索 brat，下载安装并启用。
+
+![](./assets/20231019_224319.png)
+
+点击 Add Beta plugin 有个弹窗，填写这个网址，点击 `Add Plugin`
+
+```text
+https://github.com/Otto-J/sync-to-xlog
+```
+
+通过这种方式就可以自动更新啦，不用手动操作了，很方便。
+
+### 手动安装 不再推荐
+
+这种方式和 brat 是一个思路，比较繁琐还不能享受在线更新，因此不再推荐这种方案。
+
 在官方插件审核通过之前，需要访问 https://github.com/Otto-J/sync-to-xlog/releases 下载最新 dist.zip 文件夹，放入插件目录
 
 设置 - 第三方插件 - 已安装插件右侧有个文件夹图标。解压后放入即可。
