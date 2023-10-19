@@ -109,7 +109,7 @@
 </template>
 <script lang="ts" setup>
 import { Notice } from "obsidian";
-import { onMounted, ref } from "vue";
+import { onMounted, ref, watchEffect } from "vue";
 import type SyncToXlogPlugin from "@/starterIndex";
 import { defaultSettings, http } from "../model";
 
@@ -123,6 +123,10 @@ const props = withDefaults(
 );
 
 const settings = ref(defaultSettings());
+
+watchEffect(() => {
+  settings.value.token = settings.value.token.replace(/^['"]|['"]$/g, "");
+});
 
 const save = async () => {
   const newSeeting = {
