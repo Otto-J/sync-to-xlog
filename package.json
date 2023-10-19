@@ -10,7 +10,7 @@
     "build": "npm run type-check && vite build  ",
     "format": "prettier --write src/",
     "bumpversion": "node version-bump.mjs && git add manifest.json versions.json",
-    "pub": "zip -r dist.zip main.js manifest.json styles.css && gh release create 0.0.3 main.js styles.css manifest.json dist.zip "
+    "pub": "zip -r dist.zip main.js manifest.json styles.css && gh release create 0.0.4 main.js styles.css manifest.json dist.zip "
   },
   "keywords": [],
   "author": "Otto",
