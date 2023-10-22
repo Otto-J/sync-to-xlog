@@ -3,7 +3,7 @@
 An Obsidian plugin that syncs notes to xlog.app.
 一个 Obsidian 插件，可以把笔记同步到 xlog.app 上。
 
-## 相关截图
+# 相关截图
 
 上传弹窗
 
@@ -12,44 +12,57 @@ An Obsidian plugin that syncs notes to xlog.app.
 设置截图
 
 ![](./assets/Snipaste_2023-10-17_11-36-19.png)
-
-## 使用方式
-
-### BRAT 安装
-
-经过热心的朋友提醒，obsidian 里有个 brat 插件，类似 iOS 里的 testFlight，可以分发测试插件。
-
+## 安装
+目前本插件尚未通过obsidian官方上线，可以通过BRAT安装（类似于iOS TestFlight），或者手动安装
+### 通过BRAT安装（推荐）
 打开设置 - 第三方插件 - 浏览 - 搜索 brat，下载安装并启用。
 
-![](./assets/20231019_224319.png)
+<img width="548" alt="image" src="https://github.com/whitewatercn/sync-to-xlog/assets/58654928/c8f30a7e-0472-4ab9-b8f0-35b30495b0db">
 
-点击 Add Beta plugin 有个弹窗，填写这个网址，点击 `Add Plugin`
+打开BRAT设置
+
+<img width="868" alt="image" src="https://github.com/whitewatercn/sync-to-xlog/assets/58654928/b30ae21f-acb3-4e5a-abba-86469a4f999e">
+
+点击 Add Beta plugin
+有个弹窗，填写这个网址
+![](./assets/20231019_224319.png)
 
 ```text
 https://github.com/Otto-J/sync-to-xlog
 ```
 
-通过这种方式就可以自动更新啦，不用手动操作了，很方便。
+点击 `Add Plugin`
+<img width="589" alt="image" src="https://github.com/whitewatercn/sync-to-xlog/assets/58654928/a8675b17-715e-40ed-9d8d-1c21ea177253">
 
-### 手动安装 不再推荐
 
-这种方式和 brat 是一个思路，比较繁琐还不能享受在线更新，因此不再推荐这种方案。
+<img width="874" alt="image" src="https://github.com/whitewatercn/sync-to-xlog/assets/58654928/29f7ae91-cec5-47a7-979b-66d12ce90d92">
 
-在官方插件审核通过之前，需要访问 https://github.com/Otto-J/sync-to-xlog/releases 下载最新 dist.zip 文件夹，放入插件目录
+
+### 手动安装（不再推荐）
+访问 https://github.com/Otto-J/sync-to-xlog/releases 下载最新 dist.zip 文件夹，放入插件目录
 
 设置 - 第三方插件 - 已安装插件右侧有个文件夹图标。解压后放入即可。
 
 ![](./assets/20231019_114353.png)
 
-首次使用，点击插件设置，按照提示填写 token 并点击连接测试。
+## 使用教程
+### 视频教程
+见B站 [《介绍我开发的 Obsidian-sync-xlog 插件：轻松帮你同步 obsidian 内容到 xlog 上》](https://www.bilibili.com/video/BV1rQ4y1s7Fa/)
 
-如果你更习惯观看视频，我甚至还做了一个视频教程，放入了 B 站
+### 文字教程
+启用插件后，[获取token](https://blog.ijust.cc/play-xlog-02)并连接测试成功
+选择发布内容的账号（同一token可绑定多个账号）
+<img width="866" alt="image" src="https://github.com/whitewatercn/sync-to-xlog/assets/58654928/3e8fa137-5a44-4cb8-b938-8910096d4f0b">
 
-[《介绍我开发的 Obsidian-sync-xlog 插件：轻松帮你同步 obsidian 内容到 xlog 上》](https://www.bilibili.com/video/BV1rQ4y1s7Fa/)
+在Obsidian中右键文件，选择`上传此文件到xlog`
+<img width="351" alt="image" src="https://github.com/whitewatercn/sync-to-xlog/assets/58654928/a2928d32-f8c6-4454-aad8-17aba29c54d5">
+
+编辑相关设置后，点击`上传`
+<img width="589" alt="image" src="https://github.com/whitewatercn/sync-to-xlog/assets/58654928/96f7469a-5b9d-4eae-9321-4c6a7038b2b3">
 
 ## 当前进展
 
-等待官方插件上线。
+等待obsidian官方上线本插件
 
 项目背景和程序设计可以访问 https://blog.ijust.cc/play-xlog-03
 
