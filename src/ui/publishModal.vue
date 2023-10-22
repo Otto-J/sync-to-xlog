@@ -150,7 +150,7 @@
 <script lang="ts" setup>
 import { computed, nextTick, onMounted, reactive, ref, watchEffect } from "vue";
 import type SyncToXlogPlugin from "@/starterIndex";
-import { Notice, type Modal, TFile } from "obsidian";
+import { Notice, type Modal, TFile, App } from "obsidian";
 import { defaultSettings, handleMarkdownImageToXlog, http } from "../model";
 
 const props = withDefaults(
@@ -285,6 +285,7 @@ const handleCreatePost = async ({
     // 上传图片到 ipfs
     content = await handleUpload(baseInfo.content, props.file);
   }
+  return false;
 
   return http
     .request({
@@ -353,7 +354,7 @@ const handleUpdatePost = async ({
 
   // console.log("final-content", content);
   // console.log(new Date(config.value.publish_time).toISOString());
-  // return false;
+  return false;
 
   return http
     .request({
@@ -468,7 +469,7 @@ const handleSubmit = async ({
 };
 
 const handleUpload = async (content: string, file: TFile) => {
-  const finalContent = await handleMarkdownImageToXlog(content, file);
+  const finalContent = await handleMarkdownImageToXlog(content, props.plugin);
 
   // console.log("final content", finalContent);
   return finalContent;
