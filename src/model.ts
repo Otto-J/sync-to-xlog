@@ -1,5 +1,5 @@
 import axios from "axios";
-import { Notice, TFile, requestUrl } from "obsidian";
+import { Notice, Plugin, requestUrl } from "obsidian";
 
 export const http = axios.create({
   baseURL: "https://indexer.crossbell.io",
@@ -21,7 +21,6 @@ const uploadImageToIPFS = async (blob: Blob) => {
   // 后续如果上传图片失败，需要关注原始代码是否变化，目前没有鉴权还是需要注意的
   //github.com/Crossbell-Box/xLog/blob/dev/src/lib/upload-file.ts#L1
   // form xlog source src/lib/upload-file.ts
-  // console.log(blob);
   const formData = new FormData();
   formData.append("file", blob);
 
@@ -38,13 +37,13 @@ const uploadImageToIPFS = async (blob: Blob) => {
 const handleRemoteUrl = async (alt: string, url: string) => {
   console.log("handleRemoteUrl", url, alt);
   try {
+    // 这里可能遇到 cors ，所以用内置的 api 无视安全策略
     const response = await requestUrl({
       url: url,
       method: "GET",
     });
     const buf = await response.arrayBuffer;
     const type = response.headers["content-type"];
-    // console.log("88response", buf,  response);
 
     const blob = new Blob([buf], {
       type,
@@ -64,46 +63,34 @@ const handleRemoteUrl = async (alt: string, url: string) => {
     return undefined;
   }
 };
-const handleLocalUrl = async (url: string, file: TFile) => {
-  console.log("handleLocalUrl--", url);
+const handleLocalUrl = async (obUrl: string, plugin: Plugin) => {
+  console.log("handleLocalUrl--", obUrl);
   // 这里需要调用 obsidian 的 api 来读取文件
   try {
-    // 如果url 包含空格做提示
-    if (url.includes(" ")) {
-      new Notice(
-        `Failed upload ${url}, 文件路径不能包含空格，可能会导致上传失败`
-      );
-    }
-    // 如果url不包含 / 做提示
-    if (!url.includes("/")) {
-      new Notice(`Failed upload ${url}, 文件路径不包含 /，可能会导致上传失败`);
-    }
-
-    const _file = await file.vault.getAbstractFileByPath(url);
-    if (!_file || !(_file instanceof TFile)) {
-      console.log("文件不存在", _file);
-      new Notice(`Failed upload ${url}, 文件不存在`);
+    const obInnerFile = await plugin.app.metadataCache.getFirstLinkpathDest(
+      obUrl,
+      ""
+    );
+    if (!obInnerFile) {
+      new Notice(`Failed upload ${obUrl}, 文件不存在`);
       return;
     }
-    // console.log(9, _file, _file.extension, _file.basename);
+    console.log("find ob local file");
 
-    const conArrayBuffer = await file.vault.readBinary(_file);
-    // 数据转成图片，文件名读取 file.name
+    const conArrayBuffer = await plugin.app.vault.readBinary(obInnerFile);
     // 转成二进制，通过 post 上传
     const blob = new Blob([conArrayBuffer], {
-      type: "image/" + _file.extension,
+      type: "image/" + obInnerFile.extension,
     });
     // 测试上传一个图片
-    console.log("准备上传", _file.path);
     const ipfs = (await uploadImageToIPFS(blob)).ipfs;
-    console.log("ipfs", ipfs);
+    console.log("upload ipfs", ipfs);
     return {
-      originalMarkdown: `![[${_file.path}]]`,
-      newMarkdown: `![${_file.basename}](${ipfs})`,
+      originalMarkdown: `![[${obUrl}]]`,
+      newMarkdown: `![${obInnerFile.basename}](${ipfs})`,
     };
   } catch (error: any) {
-    console.log(2, error);
-    new Notice(`Failed upload ${url}, ${error.message}`);
+    new Notice(`Failed upload ${obUrl}, ${error.message}`);
   }
 
   return;
@@ -112,7 +99,7 @@ const handleLocalUrl = async (url: string, file: TFile) => {
 // 后续这部分可以抽离为独立逻辑
 export const handleMarkdownImageToXlog = async (
   content: string,
-  file: TFile
+  plugin: Plugin
 ) => {
   /**
    * 需要处理的图片有几种格式：
@@ -131,7 +118,6 @@ export const handleMarkdownImageToXlog = async (
     const mdReplaceList = await Promise.all(
       imagesList.map(async (image) => {
         const match = image.match(mdImageRegSingle);
-        // console.log("match", match);
         // 通过 match 来判断符合标准
         if (match) {
           const [, alt, url, obUrl] = match;
@@ -140,7 +126,7 @@ export const handleMarkdownImageToXlog = async (
             return await handleRemoteUrl(alt, url);
           } else if (obUrl) {
             // ob 图片
-            return await handleLocalUrl(obUrl, file);
+            return await handleLocalUrl(obUrl, plugin);
           } else {
             console.log("匹配失败", match);
           }
@@ -148,7 +134,6 @@ export const handleMarkdownImageToXlog = async (
       })
     );
 
-    // console.log("mdReplaceList", mdReplaceList);
     let newContent = content;
     // mdReplaceList 包含带替换的内容
     // 开始替换图片

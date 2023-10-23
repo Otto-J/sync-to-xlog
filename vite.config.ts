@@ -3,34 +3,70 @@ import { defineConfig } from "vite";
 import builtins from "builtin-modules";
 import vue from "@vitejs/plugin-vue";
 import { fileURLToPath, URL } from "node:url";
+import fs from "fs/promises";
 import process from "node:process";
+import manifest from "./manifest.json";
+import path from "path";
 
-const prod = process.argv[2] === "production";
+import dotenv from "dotenv";
+import dotenvExpand from "dotenv-expand";
+const env = dotenv.config();
+dotenvExpand.expand(env);
 
-export default defineConfig(() => {
+export default defineConfig(({ command }) => {
+  const isProd = command === "build";
   return {
-    plugins: [vue()],
-    watch: !prod,
+    plugins: [
+      vue(),
+      {
+        name: "postbuild-commands",
+        async closeBundle() {
+          if (!process.env.OB_PLUGIN_DIST) {
+            console.log(
+              "为了更好的开发体验，你可以在 .env 中配置 OB_PLUGIN_DIST"
+            );
+            return;
+          }
+          const dist = process.env.OB_PLUGIN_DIST + manifest.id + "-dev";
+
+          await fs.mkdir(dist, { recursive: true });
+
+          const copy = async (src: string, dist: string) => {
+            await fs.copyFile(src, path.resolve(dist, src));
+          };
+          // do something
+          // copy file
+          await Promise.all([
+            await copy("./main.js", dist),
+            await copy("./styles.css", dist),
+            await copy("./manifest.json", dist),
+            await copy("./data.json", dist),
+            await copy("./versions.json", dist),
+          ]);
+          console.log("复制结果到", dist);
+        },
+      },
+    ],
     build: {
-      sourcemap: prod ? false : "inline",
-      minify: prod,
-      // Use Vite lib mode https://vitejs.dev/guide/build.html#library-mode
+      // 都是 electron 了怕啥
+      target: "esnext",
+      sourcemap: false,
+      // sourcemap: isProd ? false : "inline",
+      minify: isProd,
       commonjsOptions: {
         ignoreTryCatch: false,
       },
+      // 使用 vite 就是为了 lib 打包
       lib: {
         entry: fileURLToPath(new URL("./src/starterIndex.ts", import.meta.url)),
-        // entry: path.resolve(__dirname, "./src/starterIndex.ts"),
         formats: ["cjs"],
       },
       css: {},
       rollupOptions: {
         output: {
-          // Overwrite default Vite output fileName
-          // if dev
-          // dir: "./dist",
           entryFileNames: "main.js",
           assetFileNames: "styles.css",
+          exports: "named",
         },
         external: [
           "obsidian",
