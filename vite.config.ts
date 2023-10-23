@@ -40,8 +40,6 @@ export default defineConfig(({ command }) => {
             await copy("./main.js", dist),
             await copy("./styles.css", dist),
             await copy("./manifest.json", dist),
-            await copy("./data.json", dist),
-            await copy("./versions.json", dist),
           ]);
           console.log("复制结果到", dist);
         },
