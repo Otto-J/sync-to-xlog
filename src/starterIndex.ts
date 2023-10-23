@@ -1,13 +1,4 @@
-import {
-  App,
-  Modal,
-  Plugin,
-  PluginSettingTab,
-  TFile,
-  TFolder,
-  getLinkpath,
-  normalizePath,
-} from "obsidian";
+import { App, Modal, Plugin, PluginSettingTab, TFile, TFolder } from "obsidian";
 import { createApp, type App as VueApp } from "vue";
 import SettingsPage from "./ui/settings.vue";
 import PublishModal from "./ui/publishModal.vue";

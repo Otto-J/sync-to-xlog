@@ -1,5 +1,5 @@
 import axios from "axios";
-import { Notice, Plugin, TFile, requestUrl } from "obsidian";
+import { Notice, Plugin, requestUrl } from "obsidian";
 
 export const http = axios.create({
   baseURL: "https://indexer.crossbell.io",
@@ -38,6 +38,7 @@ const uploadImageToIPFS = async (blob: Blob) => {
 const handleRemoteUrl = async (alt: string, url: string) => {
   console.log("handleRemoteUrl", url, alt);
   try {
+    // 这里可能遇到 cors ，所以用内置的 api 无视安全策略
     const response = await requestUrl({
       url: url,
       method: "GET",
@@ -76,8 +77,7 @@ const handleLocalUrl = async (obUrl: string, plugin: Plugin) => {
       new Notice(`Failed upload ${obUrl}, 文件不存在`);
       return;
     }
-
-    console.log("内部图片 obInnerFile", obInnerFile);
+    console.log("find ob local file");
 
     const conArrayBuffer = await plugin.app.vault.readBinary(obInnerFile);
     // 转成二进制，通过 post 上传
@@ -85,15 +85,14 @@ const handleLocalUrl = async (obUrl: string, plugin: Plugin) => {
       type: "image/" + obInnerFile.extension,
     });
     // 测试上传一个图片
-    console.log("准备上传", obInnerFile.path);
     const ipfs = (await uploadImageToIPFS(blob)).ipfs;
-    console.log("ipfs", ipfs);
+    console.log("upload ipfs", ipfs);
     return {
-      originalMarkdown: `![[${obInnerFile.path}]]`,
+      originalMarkdown: `![[${obUrl}]]`,
       newMarkdown: `![${obInnerFile.basename}](${ipfs})`,
     };
   } catch (error: any) {
-    console.log(2, error);
+    console.log("upload local file error:", error);
     new Notice(`Failed upload ${obUrl}, ${error.message}`);
   }
 
@@ -139,7 +138,8 @@ export const handleMarkdownImageToXlog = async (
       })
     );
 
-    // console.log("mdReplaceList", mdReplaceList);
+    console.log("mdReplaceList", mdReplaceList);
+
     let newContent = content;
     // mdReplaceList 包含带替换的内容
     // 开始替换图片
@@ -149,6 +149,7 @@ export const handleMarkdownImageToXlog = async (
           item.originalMarkdown,
           item.newMarkdown
         );
+        console.log(newContent, 33);
       }
     });
     // 替换完成

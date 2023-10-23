@@ -150,21 +150,19 @@
 <script lang="ts" setup>
 import { computed, nextTick, onMounted, reactive, ref, watchEffect } from "vue";
 import type SyncToXlogPlugin from "@/starterIndex";
-import { Notice, type Modal, TFile, App } from "obsidian";
+import { Notice, Modal, TFile } from "obsidian";
 import { defaultSettings, handleMarkdownImageToXlog, http } from "../model";
 
 const props = withDefaults(
   defineProps<{
-    plugin: SyncToXlogPlugin | undefined;
+    plugin: SyncToXlogPlugin;
     modal: Modal;
     file: TFile;
     addOrUpdateFrontMatter: (frontMatter: any) => void;
     currentFrontMatter: any;
   }>(),
   {
-    plugin: undefined,
-    modal: undefined,
-    file: undefined,
+    currentFrontMatter: () => ({}),
   }
 );
 
@@ -177,6 +175,7 @@ const defaultConfig = () => ({
   rawTags: "",
   slug: "",
   publish_time: "",
+  create_time: "",
   publishTimeMode: "current" as "current" | "create_time" | "custom",
   uploadIPFS: true,
 });
@@ -221,7 +220,6 @@ const handleCurrentInfo = async () => {
   baseInfo.title = props.file.basename;
   baseInfo.content = await props.file.vault.cachedRead(props.file);
   baseInfo.frontMatter = props.currentFrontMatter();
-  // console.log("base info", baseInfo);
 
   config.value.rawTags = baseInfo.frontMatter?.tags?.join(",") || "";
   config.value.slug = baseInfo.frontMatter?.slug || "";
@@ -238,6 +236,7 @@ const ctime = computed(
 );
 
 onMounted(async () => {
+  // 读取配置
   settings = await props.plugin?.loadData();
   const validate = checkSettingValidate(settings);
   if (!validate) {
@@ -245,6 +244,7 @@ onMounted(async () => {
   }
   config.value.uploadIPFS = settings.autoUpload || false;
 
+  // 读取文章内容和相关信息
   await handleCurrentInfo();
 
   // 如果当前 fm 中有 publish_time 设置 timeMode=custom,并设置
@@ -256,6 +256,7 @@ onMounted(async () => {
   }
 });
 
+// 监听发布时间模式
 watchEffect(() => {
   if (config.value.publishTimeMode === "create_time") {
     const current = new Date(ctime.value).toLocaleString();
@@ -269,6 +270,7 @@ watchEffect(() => {
   }
 });
 
+// 创建文章
 const handleCreatePost = async ({
   token = "",
   title = "",
@@ -283,9 +285,9 @@ const handleCreatePost = async ({
 
   if (config.value.uploadIPFS) {
     // 上传图片到 ipfs
-    content = await handleUpload(baseInfo.content, props.file);
+    content = await handleUpload(baseInfo.content);
   }
-  return false;
+  // return false;
 
   return http
     .request({
@@ -349,12 +351,10 @@ const handleUpdatePost = async ({
 
   if (config.value.uploadIPFS) {
     // 上传图片到 ipfs
-    content = await handleUpload(baseInfo.content, props.file);
+    content = await handleUpload(baseInfo.content);
   }
 
-  // console.log("final-content", content);
-  // console.log(new Date(config.value.publish_time).toISOString());
-  return false;
+  // return false;
 
   return http
     .request({
@@ -460,7 +460,7 @@ const handleSubmit = async ({
     tags: tags.filter((i) => i !== "post"),
     noteId_x: numberNoteID,
 
-    create_time: new Date(props.file.stat.ctime).toLocaleString(),
+    create_time: new Date(ctime.value).toLocaleString(),
     update_time: new Date().toLocaleString(),
     publish_time: config.value.publish_time,
   });
@@ -468,7 +468,7 @@ const handleSubmit = async ({
   closeModal();
 };
 
-const handleUpload = async (content: string, file: TFile) => {
+const handleUpload = async (content: string) => {
   const finalContent = await handleMarkdownImageToXlog(content, props.plugin);
 
   // console.log("final content", finalContent);

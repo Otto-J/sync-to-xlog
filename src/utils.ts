@@ -1,4 +1,4 @@
-import { App, Notice, TFile, stringifyYaml } from "obsidian";
+import { type App, Notice, TFile, stringifyYaml } from "obsidian";
 
 export const useObsidianFrontmatter = (file: TFile, app: App) => {
   // 使用更具语义化的函数名
@@ -36,7 +36,7 @@ export const useObsidianFrontmatter = (file: TFile, app: App) => {
       },
     };
 
-    // 这里逻辑比较绕，目的是重写文件内容，后面如果有 api 可能就一行代码解决了，类似 metadataCache.update
+    // 这里逻辑比较绕，目的是重写文件内容，希望有官方 api
     const {
       start: { offset: deleteFrom },
       end: { offset: deleteTo },

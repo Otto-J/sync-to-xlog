@@ -3,34 +3,65 @@ import { defineConfig } from "vite";
 import builtins from "builtin-modules";
 import vue from "@vitejs/plugin-vue";
 import { fileURLToPath, URL } from "node:url";
+import fs from "fs/promises";
 import process from "node:process";
+import manifest from "./manifest.json";
 
-const prod = process.argv[2] === "production";
+import dotenv from "dotenv";
+import dotenvExpand from "dotenv-expand";
+const env = dotenv.config();
+dotenvExpand.expand(env);
 
-export default defineConfig(() => {
+export default defineConfig(({ command }) => {
+  const isProd = command === "build";
   return {
-    plugins: [vue()],
-    watch: !prod,
+    plugins: [
+      vue(),
+      {
+        name: "postbuild-commands",
+        async closeBundle() {
+          if (!process.env.OB_PLUGIN_DIST) {
+            console.log(
+              "未来更好的开发体验，你可以在 .env 中配置 OB_PLUGIN_DIST"
+            );
+            return;
+          }
+          const dist = process.env.OB_PLUGIN_DIST + manifest.id + "-dev";
+
+          await fs.mkdir(dist, { recursive: true });
+          // do something
+          // copy file
+          await Promise.all([
+            fs.copyFile("./styles.css", dist + "/styles.css"),
+            fs.copyFile("./main.js", dist + "/main.js"),
+            fs.copyFile("./manifest.json", dist + "/manifest.json"),
+            fs.copyFile("./data.json", dist + "/data.json"),
+          ]);
+          console.log("复制结果到", dist);
+        },
+      },
+    ],
+    watch: !isProd,
     build: {
-      sourcemap: prod ? false : "inline",
-      minify: prod,
-      // Use Vite lib mode https://vitejs.dev/guide/build.html#library-mode
+      // watch: !isProd,
+      // 都是 electron 了怕啥
+      target: "esnext",
+      sourcemap: isProd ? false : "inline",
+      minify: isProd,
       commonjsOptions: {
         ignoreTryCatch: false,
       },
+      // 使用 vite 就是为了 lib 打包
       lib: {
         entry: fileURLToPath(new URL("./src/starterIndex.ts", import.meta.url)),
-        // entry: path.resolve(__dirname, "./src/starterIndex.ts"),
         formats: ["cjs"],
       },
       css: {},
       rollupOptions: {
         output: {
-          // Overwrite default Vite output fileName
-          // if dev
-          // dir: "./dist",
           entryFileNames: "main.js",
           assetFileNames: "styles.css",
+          exports: "named",
         },
         external: [
           "obsidian",
