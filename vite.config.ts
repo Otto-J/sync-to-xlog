@@ -6,6 +6,7 @@ import { fileURLToPath, URL } from "node:url";
 import fs from "fs/promises";
 import process from "node:process";
 import manifest from "./manifest.json";
+import path from "path";
 
 import dotenv from "dotenv";
 import dotenvExpand from "dotenv-expand";
@@ -22,31 +23,35 @@ export default defineConfig(({ command }) => {
         async closeBundle() {
           if (!process.env.OB_PLUGIN_DIST) {
             console.log(
-              "未来更好的开发体验，你可以在 .env 中配置 OB_PLUGIN_DIST"
+              "为了更好的开发体验，你可以在 .env 中配置 OB_PLUGIN_DIST"
             );
             return;
           }
           const dist = process.env.OB_PLUGIN_DIST + manifest.id + "-dev";
 
           await fs.mkdir(dist, { recursive: true });
+
+          const copy = async (src: string, dist: string) => {
+            await fs.copyFile(src, path.resolve(dist, src));
+          };
           // do something
           // copy file
           await Promise.all([
-            fs.copyFile("./styles.css", dist + "/styles.css"),
-            fs.copyFile("./main.js", dist + "/main.js"),
-            fs.copyFile("./manifest.json", dist + "/manifest.json"),
-            fs.copyFile("./data.json", dist + "/data.json"),
+            await copy("./main.js", dist),
+            await copy("./styles.css", dist),
+            await copy("./manifest.json", dist),
+            await copy("./data.json", dist),
+            await copy("./versions.json", dist),
           ]);
           console.log("复制结果到", dist);
         },
       },
     ],
-    watch: !isProd,
     build: {
-      // watch: !isProd,
       // 都是 electron 了怕啥
       target: "esnext",
-      sourcemap: isProd ? false : "inline",
+      sourcemap: false,
+      // sourcemap: isProd ? false : "inline",
       minify: isProd,
       commonjsOptions: {
         ignoreTryCatch: false,
