@@ -21,7 +21,6 @@ const uploadImageToIPFS = async (blob: Blob) => {
   // 后续如果上传图片失败，需要关注原始代码是否变化，目前没有鉴权还是需要注意的
   //github.com/Crossbell-Box/xLog/blob/dev/src/lib/upload-file.ts#L1
   // form xlog source src/lib/upload-file.ts
-  // console.log(blob);
   const formData = new FormData();
   formData.append("file", blob);
 
@@ -73,7 +72,6 @@ const handleLocalUrl = async (obUrl: string, plugin: Plugin) => {
       ""
     );
     if (!obInnerFile) {
-      console.log("文件不存在", obUrl);
       new Notice(`Failed upload ${obUrl}, 文件不存在`);
       return;
     }
@@ -92,7 +90,6 @@ const handleLocalUrl = async (obUrl: string, plugin: Plugin) => {
       newMarkdown: `![${obInnerFile.basename}](${ipfs})`,
     };
   } catch (error: any) {
-    console.log("upload local file error:", error);
     new Notice(`Failed upload ${obUrl}, ${error.message}`);
   }
 
@@ -121,7 +118,6 @@ export const handleMarkdownImageToXlog = async (
     const mdReplaceList = await Promise.all(
       imagesList.map(async (image) => {
         const match = image.match(mdImageRegSingle);
-        // console.log("match", match);
         // 通过 match 来判断符合标准
         if (match) {
           const [, alt, url, obUrl] = match;
@@ -138,8 +134,6 @@ export const handleMarkdownImageToXlog = async (
       })
     );
 
-    console.log("mdReplaceList", mdReplaceList);
-
     let newContent = content;
     // mdReplaceList 包含带替换的内容
     // 开始替换图片
@@ -149,7 +143,6 @@ export const handleMarkdownImageToXlog = async (
           item.originalMarkdown,
           item.newMarkdown
         );
-        console.log(newContent, 33);
       }
     });
     // 替换完成

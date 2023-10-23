@@ -412,7 +412,6 @@ const handleSubmit = async ({
 }) => {
   let numberNoteID = Number(noteID);
   const hasNoteID = !Number.isNaN(numberNoteID);
-  // console.log("3", hasNoteID && numberNoteID > 0);
   const isUpdate = hasNoteID && numberNoteID > 0;
 
   // 如果发布时间是自定义，但是内容为空，设置当前时间
@@ -471,7 +470,6 @@ const handleSubmit = async ({
 const handleUpload = async (content: string) => {
   const finalContent = await handleMarkdownImageToXlog(content, props.plugin);
 
-  // console.log("final content", finalContent);
   return finalContent;
 };
 
@@ -498,7 +496,6 @@ const startUpload = async () => {
     slug: config.value.slug,
     noteID: config.value.noteId,
   };
-  // console.log("4,current config", currentConfig.content);
   // 1. 上传
   await handleSubmit(currentConfig);
   isLoading.value = false;

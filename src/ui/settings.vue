@@ -191,10 +191,8 @@ const connectTest = () => {
 
 onMounted(async () => {
   if (props.plugin) {
-    // console.log(props.plugin.loadData);
     const _currentSetting =
       (await props.plugin.loadData()) ?? defaultSettings();
-    // console.log("222", _currentSetting);
     settings.value = _currentSetting;
   }
 });
