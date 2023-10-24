@@ -2,9 +2,6 @@ import { App, Modal, Plugin, PluginSettingTab, TFile, TFolder } from "obsidian";
 import { createApp, type App as VueApp } from "vue";
 import SettingsPage from "./ui/settings.vue";
 import PublishModal from "./ui/publishModal.vue";
-import { getFrontMatterByFile, updateFrontMatterByFile } from "./utils";
-
-// Remember to rename these classes and interfaces!
 
 // 核心
 export default class SyncToXlogPlugin extends Plugin {
@@ -13,7 +10,6 @@ export default class SyncToXlogPlugin extends Plugin {
     this.addSettingTab(settingTab);
 
     // 左侧 sidebar 具体文件单击右键
-
     this.registerEvent(
       this.app.workspace.on("file-menu", (menu, file) => {
         if (file instanceof TFolder) {
@@ -32,12 +28,6 @@ export default class SyncToXlogPlugin extends Plugin {
             menu.addItem((item) => {
               item.setTitle("上传此文件到 xlog").onClick(async () => {
                 new MyPublishModal(this.app, this, file).open();
-              });
-            });
-
-            menu.addItem((item) => {
-              item.setTitle("测试").onClick(async () => {
-                console.log(file, "file");
               });
             });
           }

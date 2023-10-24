@@ -49,7 +49,8 @@ export default defineConfig(({ command }) => {
     build: {
       // 都是 electron 了怕啥
       target: "esnext",
-      sourcemap: false,
+      // sourcemap: false,
+      sourcemap: "inline",
       // sourcemap: isProd ? false : "inline",
       minify: isProd,
       commonjsOptions: {
