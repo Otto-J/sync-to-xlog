@@ -1,6 +1,6 @@
 {
-  "id": "sync-to-xlog-local",
-  "name": "sync-to-xlog-local",
+  "id": "sync-to-xlog",
+  "name": "sync-to-xlog",
   "version": "0.2.0",
   "minAppVersion": "0.12.0",
   "description": "Publish your obsidian file to xlog.app",

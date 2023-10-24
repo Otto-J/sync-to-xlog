@@ -1,6 +1,3 @@
-import { handleMarkdownImageToXlog } from "@/model";
-import { Notice, Plugin, requestUrl } from "obsidian";
-
 export const defaultConfig = () => ({
   title: "",
   noteId: "",

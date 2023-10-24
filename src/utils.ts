@@ -1,4 +1,4 @@
-import { TFile, App, type RequestUrlParam, Plugin } from "obsidian";
+import { TFile, type App, type RequestUrlParam, Plugin } from "obsidian";
 
 export const getFrontMatterByFile = async (file: TFile, app: App) => {
   let frontmatter = {} as Record<string, any>;
