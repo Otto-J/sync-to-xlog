@@ -14,7 +14,7 @@ const env = dotenv.config();
 dotenvExpand.expand(env);
 
 export default defineConfig(({ command }) => {
-  const isProd = command === "build";
+  const isProd = command === "build"; // always true
   return {
     plugins: [
       vue(),
@@ -49,8 +49,8 @@ export default defineConfig(({ command }) => {
     build: {
       // 都是 electron 了怕啥
       target: "esnext",
-      // sourcemap: false,
-      sourcemap: "inline",
+      sourcemap: false,
+      // sourcemap: "inline",
       // sourcemap: isProd ? false : "inline",
       minify: isProd,
       commonjsOptions: {
