@@ -1,6 +1,6 @@
 {
   "name": "sync-to-xlog",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A plugin for Obsidian.md to sync xlog.app",
   "main": "main.js",
   "scripts": {
