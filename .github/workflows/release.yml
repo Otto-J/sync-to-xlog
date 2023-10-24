@@ -1,6 +1,8 @@
 name: Release Obsidian plugin
 
+# 手动触发
 on:
+  workflow_dispatch:
   push:
     tags:
       - "*"
