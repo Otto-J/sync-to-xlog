@@ -13,14 +13,18 @@ import dotenvExpand from "dotenv-expand";
 const env = dotenv.config();
 dotenvExpand.expand(env);
 
-export default defineConfig(({ command }) => {
-  const isProd = command === "build"; // always true
+const isWatch = process.argv.includes("--watch");
+
+export default defineConfig(() => {
+  // const isProd = command === "build"; // always true
   return {
     plugins: [
       vue(),
       {
         name: "postbuild-commands",
         async closeBundle() {
+          if (!isWatch) return;
+
           if (!process.env.OB_PLUGIN_DIST) {
             console.log(
               "为了更好的开发体验，你可以在 .env 中配置 OB_PLUGIN_DIST"
@@ -49,10 +53,8 @@ export default defineConfig(({ command }) => {
     build: {
       // 都是 electron 了怕啥
       target: "esnext",
-      sourcemap: false,
-      // sourcemap: "inline",
-      // sourcemap: isProd ? false : "inline",
-      minify: isProd,
+      sourcemap: isWatch ? "inline" : false,
+      minify: true,
       commonjsOptions: {
         ignoreTryCatch: false,
       },
