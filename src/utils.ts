@@ -1,4 +1,4 @@
-import { TFile, App } from "obsidian";
+import { TFile, App, type RequestUrlParam } from "obsidian";
 
 export const getFrontMatterByFile = async (file: TFile, app: App) => {
   let frontmatter = {} as Record<string, any>;
@@ -18,4 +18,14 @@ export const updateFrontMatterByFile = async (
       fm[key] = finalData[key];
     });
   });
+};
+export const commonGet = (url: string, token: string): RequestUrlParam => {
+  return {
+    url,
+    method: "GET",
+    contentType: "application/json",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  };
 };

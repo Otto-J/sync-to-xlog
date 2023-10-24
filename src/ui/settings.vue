@@ -1,12 +1,13 @@
 <template>
-  <h1 class="H1">Obsidian Sync Xlog</h1>
-  <h2>这里配置 xlog 基本信息</h2>
-  <div v-if="settings.debugger">{{ settings }}</div>
+  <h2>基础 Basic</h2>
   <!-- enable -->
   <div class="setting-item mod-toggle">
     <div class="setting-item-info">
-      <div class="setting-item-name">启用状态</div>
-      <div class="setting-item-description">若关闭插件不生效</div>
+      <div class="setting-item-name">启用 Enable</div>
+      <div class="setting-item-description">
+        若关闭插件不生效<br />
+        Turn off will disable
+      </div>
     </div>
 
     <div class="setting-item-control">
@@ -18,13 +19,16 @@
       </div>
     </div>
   </div>
+  <h2>xLog</h2>
   <!-- username -->
   <div class="setting-item">
     <div class="setting-item-info">
       <div class="setting-item-name">XLOG SIWE Token</div>
       <div class="setting-item-description">
         如不清楚 Token 请访问
-        <a tabindex="1" href="https://blog.ijust.cc/play-xlog-02">获取帮助</a>
+        <a tabindex="1" href="https://blog.ijust.cc/play-xlog-02"
+          >获取帮助 Get Help</a
+        >
       </div>
     </div>
     <div class="setting-item-control">
@@ -86,21 +90,6 @@
       </div>
     </div>
   </div>
-  <!-- debugger -->
-  <div class="setting-item mod-toggle">
-    <div class="setting-item-info">
-      <div class="setting-item-name">启用 debugger</div>
-      <div class="setting-item-description">开发问题排查</div>
-    </div>
-    <div class="setting-item-control">
-      <div
-        class="checkbox-container"
-        :class="settings.debugger ? 'is-enabled' : ''"
-      >
-        <input type="checkbox" v-model="settings.debugger" tabindex="6" />
-      </div>
-    </div>
-  </div>
 
   <div class="setting-item-control" style="margin-top: 18px">
     <button @click="settings = defaultSettings()">重置配置</button>
@@ -108,19 +97,14 @@
   </div>
 </template>
 <script lang="ts" setup>
-import { Notice, requestUrl, type RequestUrlParam } from "obsidian";
+import { Notice, Plugin, requestUrl } from "obsidian";
 import { onMounted, ref, watchEffect } from "vue";
-import type SyncToXlogPlugin from "@/starterIndex";
 import { baseUrl, defaultSettings } from "../model";
+import { commonGet } from "@/utils";
 
-const props = withDefaults(
-  defineProps<{
-    plugin: SyncToXlogPlugin | undefined;
-  }>(),
-  {
-    plugin: undefined,
-  }
-);
+const props = defineProps<{
+  plugin: Plugin;
+}>();
 
 const settings = ref(defaultSettings());
 
@@ -133,25 +117,9 @@ const save = async () => {
     // ...currentSetting.value,
     ...settings.value,
   };
-  // currentSetting.value = newSeeting;
-  await props.plugin?.saveData(newSeeting);
-  console.log("save");
+  await props.plugin.saveData(newSeeting);
   new Notice("保存成功");
 };
-
-const commonGet = (url: string, token: string): RequestUrlParam => {
-  return {
-    url,
-    method: "GET",
-    contentType: "application/json",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  };
-};
-const commonPost = {};
-
-// const characterList = z
 
 const connectTest = () => {
   const token = settings.value.token;
@@ -170,7 +138,7 @@ const connectTest = () => {
       return address;
     })
     .then((address) => {
-      console.log("1,address", address);
+      // console.log("1,address", address);
       const url = `${baseUrl}/v1/addresses/${address}/characters`;
       return requestUrl(commonGet(url, token));
     })
@@ -194,7 +162,6 @@ const connectTest = () => {
       });
     })
     .catch((err) => {
-      console.log("err", err);
       new Notice("连接失败" + err.message);
     });
 };
