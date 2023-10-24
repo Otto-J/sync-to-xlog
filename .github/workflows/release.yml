@@ -33,6 +33,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           tag="${GITHUB_REF#refs/tags/}"
+          echo "Creating release for tag $tag"
 
           zip -r dist.zip main.js manifest.json styles.css
 
