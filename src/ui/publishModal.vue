@@ -433,8 +433,9 @@ const handleSubmit = async ({
     if (!res) {
       return;
     }
-    // console.log("创建的 noteID 是", res.data.noteId);
-    // numberNoteID = res.data.noteId;
+    console.log("创建的 noteID 是", res.data.noteId);
+
+    numberNoteID = res.data.noteId;
   }
 
   await updateFrontMatterByFile(
