@@ -34,7 +34,10 @@ jobs:
         run: |
           tags=$(git ls-remote --tags origin)
           latest_tag=$(echo "$tags" | awk -F/ '{print $NF}' | sort -V | tail -n1)
-          echo "::set-output name=tag::$latest_tag"
+          echo "latest tag: $latest_tag"
 
           zip -r dist.zip main.js manifest.json styles.css
-          gh release create "$latest_tag" --title="$latest_tag" main.js styles.css manifest.json dist.zip
+          ls
+          # gh release create "$latest_tag" \
+           --title="$latest_tag" \
+           main.js styles.css manifest.json dist.zip
