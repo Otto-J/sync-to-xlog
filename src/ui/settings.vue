@@ -108,10 +108,10 @@
   </div>
 </template>
 <script lang="ts" setup>
-import { Notice } from "obsidian";
+import { Notice, requestUrl, type RequestUrlParam } from "obsidian";
 import { onMounted, ref, watchEffect } from "vue";
 import type SyncToXlogPlugin from "@/starterIndex";
-import { defaultSettings, http } from "../model";
+import { baseUrl, defaultSettings } from "../model";
 
 const props = withDefaults(
   defineProps<{
@@ -139,52 +139,62 @@ const save = async () => {
   new Notice("保存成功");
 };
 
+const commonGet = (url: string, token: string): RequestUrlParam => {
+  return {
+    url,
+    method: "GET",
+    contentType: "application/json",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  };
+};
+const commonPost = {};
+
+// const characterList = z
+
 const connectTest = () => {
   const token = settings.value.token;
   if (!token) {
     new Notice("token 不能为空");
     return;
   }
-  http
-    .request({
-      url: "/v1/siwe/account",
-      method: "get",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+
+  const url = baseUrl + "/v1/siwe/account";
+
+  requestUrl(commonGet(url, token))
+    .then(({ json }) => {
+      return json;
     })
-    .then((res) => {
-      return res.data.address;
+    .then(({ address }) => {
+      return address;
     })
     .then((address) => {
-      console.log(2, address);
-      return http.request({
-        url: `/v1/addresses/${address}/characters`,
-        method: "get",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      console.log("1,address", address);
+      const url = `${baseUrl}/v1/addresses/${address}/characters`;
+      return requestUrl(commonGet(url, token));
     })
-    .then((res) => {
-      console.log(3, res.data);
-      if (res.data.count > 1) {
-        new Notice("当前 token 下有多个角色，请在 Charactor ID 中手动选择");
+    .then(({ json }) => {
+      return json;
+    })
+    .then((data) => {
+      // console.log(3, data);
+      if (data.count > 1) {
+        new Notice("连接成功，请在下方 Charactor ID 中进行角色选择");
       } else {
-        settings.value.charactorID = res.data.list[0].characterId;
+        settings.value.charactorID = data.list[0].characterId;
       }
 
-      settings.value.isMultiCharactor = res.data.count > 1;
-      settings.value.charactorList = res.data.list.map((item: any) => {
+      settings.value.isMultiCharactor = data.count > 1;
+      settings.value.charactorList = data.list.map((item: any) => {
         return {
           name: `${item.handle}(${item.characterId})`,
           value: item.characterId,
         };
       });
-      new Notice("连接成功");
     })
     .catch((err) => {
-      console.error(err);
+      console.log("err", err);
       new Notice("连接失败" + err.message);
     });
 };

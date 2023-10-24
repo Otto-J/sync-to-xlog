@@ -1,10 +1,5 @@
-import axios from "axios";
 import { Notice, Plugin, requestUrl } from "obsidian";
 
-export const http = axios.create({
-  baseURL: "https://indexer.crossbell.io",
-  timeout: 30 * 1000,
-});
 export const handleFileToXlog = () => {};
 
 export const defaultSettings = () => ({
@@ -17,6 +12,8 @@ export const defaultSettings = () => ({
   charactorList: [] as Array<{ name: string; value: string }>,
 });
 
+export const baseUrl = "https://indexer.crossbell.io";
+
 const uploadImageToIPFS = async (blob: Blob) => {
   // 后续如果上传图片失败，需要关注原始代码是否变化，目前没有鉴权还是需要注意的
   //github.com/Crossbell-Box/xLog/blob/dev/src/lib/upload-file.ts#L1
@@ -24,14 +21,24 @@ const uploadImageToIPFS = async (blob: Blob) => {
   const formData = new FormData();
   formData.append("file", blob);
 
+  const url = "https://ipfs-relay.crossbell.io/upload?gnfd=t";
+
+  const response = await requestUrl({
+    method: "POST",
+    url: url,
+    body: formData as any,
+    contentType: "multipart/form-data",
+  });
+  console.log(1, await response.json());
+
   // 接口默认读缓存，多次上传返回相同结果
-  const response = await fetch(
-    "https://ipfs-relay.crossbell.io/upload?gnfd=t",
-    { method: "POST", body: formData }
-  );
-  return {
-    ipfs: (await response.json()).url as string,
-  };
+  // const response = await fetch(
+  //   "https://ipfs-relay.crossbell.io/upload?gnfd=t",
+  //   { method: "POST", body: formData }
+  // );
+  // return {
+  //   ipfs: (await response.json()).url as string,
+  // };
 };
 
 const handleRemoteUrl = async (alt: string, url: string) => {
@@ -48,13 +55,13 @@ const handleRemoteUrl = async (alt: string, url: string) => {
     const blob = new Blob([buf], {
       type,
     });
-    const ipfs = (await uploadImageToIPFS(blob)).ipfs;
+    // const ipfs = (await uploadImageToIPFS(blob)).ipfs;
     // 上传成功 toast
 
-    return {
-      originalMarkdown: `![${alt}](${url})`,
-      newMarkdown: `![${alt}](${ipfs})`,
-    };
+    // return {
+    //   originalMarkdown: `![${alt}](${url})`,
+    //   newMarkdown: `![${alt}](${ipfs})`,
+    // };
   } catch (error) {
     if (error instanceof Error) {
       new Notice(`Failed upload ${alt || url}, ${error.message}`);
@@ -83,12 +90,12 @@ const handleLocalUrl = async (obUrl: string, plugin: Plugin) => {
       type: "image/" + obInnerFile.extension,
     });
     // 测试上传一个图片
-    const ipfs = (await uploadImageToIPFS(blob)).ipfs;
-    console.log("upload ipfs", ipfs);
-    return {
-      originalMarkdown: `![[${obUrl}]]`,
-      newMarkdown: `![${obInnerFile.basename}](${ipfs})`,
-    };
+    // const ipfs = (await uploadImageToIPFS(blob)).ipfs;
+    // console.log("upload ipfs", ipfs);
+    // return {
+    //   originalMarkdown: `![[${obUrl}]]`,
+    //   newMarkdown: `![${obInnerFile.basename}](${ipfs})`,
+    // };
   } catch (error: any) {
     new Notice(`Failed upload ${obUrl}, ${error.message}`);
   }
@@ -134,17 +141,17 @@ export const handleMarkdownImageToXlog = async (
       })
     );
 
-    let newContent = content;
+    const newContent = content;
     // mdReplaceList 包含带替换的内容
     // 开始替换图片
-    mdReplaceList.forEach((item) => {
-      if (item) {
-        newContent = newContent.replace(
-          item.originalMarkdown,
-          item.newMarkdown
-        );
-      }
-    });
+    // mdReplaceList.forEach((item) => {
+    //   if (item) {
+    //     newContent = newContent.replace(
+    //       item.originalMarkdown,
+    //       item.newMarkdown
+    //     );
+    //   }
+    // });
     // 替换完成
     return newContent;
   } else {

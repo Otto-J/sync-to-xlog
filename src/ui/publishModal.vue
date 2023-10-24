@@ -150,35 +150,18 @@
 <script lang="ts" setup>
 import { computed, nextTick, onMounted, reactive, ref, watchEffect } from "vue";
 import type SyncToXlogPlugin from "@/starterIndex";
-import { Notice, Modal, TFile } from "obsidian";
-import { defaultSettings, handleMarkdownImageToXlog, http } from "../model";
+import { Notice, Modal, TFile, requestUrl } from "obsidian";
+import { defaultSettings, handleMarkdownImageToXlog } from "../model";
+import { getFrontMatterByFile, updateFrontMatterByFile } from "@/utils";
+import { defaultConfig } from "./publish.model";
 
-const props = withDefaults(
-  defineProps<{
-    plugin: SyncToXlogPlugin;
-    modal: Modal;
-    file: TFile;
-    addOrUpdateFrontMatter: (frontMatter: any) => void;
-    currentFrontMatter: any;
-  }>(),
-  {
-    currentFrontMatter: () => ({}),
-  }
-);
+const props = defineProps<{
+  plugin: SyncToXlogPlugin;
+  modal: Modal;
+  file: TFile;
+}>();
 
 const isLoading = ref(false);
-
-const defaultConfig = () => ({
-  title: "",
-  noteId: "",
-  summary: "",
-  rawTags: "",
-  slug: "",
-  publish_time: "",
-  create_time: "",
-  publishTimeMode: "current" as "current" | "create_time" | "custom",
-  uploadIPFS: true,
-});
 
 const config = ref(defaultConfig());
 
@@ -219,7 +202,10 @@ const checkSettingValidate = (settings: any) => {
 const handleCurrentInfo = async () => {
   baseInfo.title = props.file.basename;
   baseInfo.content = await props.file.vault.cachedRead(props.file);
-  baseInfo.frontMatter = props.currentFrontMatter();
+  baseInfo.frontMatter = await getFrontMatterByFile(
+    props.file,
+    props.plugin.app
+  );
 
   config.value.rawTags = baseInfo.frontMatter?.tags?.join(",") || "";
   config.value.slug = baseInfo.frontMatter?.slug || "";
@@ -289,45 +275,47 @@ const handleCreatePost = async ({
   }
   // return false;
 
-  return http
-    .request({
-      method: "put",
-      url: url,
-      headers: {
-        Authorization: `Bearer ${token}`,
+  return requestUrl({
+    method: "put",
+    url: url,
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      metadata: {
+        tags: tags,
+        type: "note",
+        title: title,
+        content: content,
+        summary: summary,
+        sources: ["xlog"],
+        // 发布日期
+        date_published: new Date(config.value.publish_time).toISOString(),
+        attributes: [
+          {
+            value: slug,
+            trait_type: "xlog_slug",
+          },
+        ],
+        attachments: [
+          {
+            name: "cover",
+            address: "",
+            mime_type: "",
+          },
+        ],
       },
-      data: {
-        metadata: {
-          tags: tags,
-          type: "note",
-          title: title,
-          content: content,
-          summary: summary,
-          sources: ["xlog"],
-          // 发布日期
-          date_published: new Date(config.value.publish_time).toISOString(),
-          attributes: [
-            {
-              value: slug,
-              trait_type: "xlog_slug",
-            },
-          ],
-          attachments: [
-            {
-              name: "cover",
-              address: "",
-              mime_type: "",
-            },
-          ],
-        },
-        locked: false,
-        linkItemType: null,
-      },
+      locked: false,
+      linkItemType: null,
+    }),
+  })
+    .then((res) => {
+      return res.json();
     })
     .then((res) => {
-      console.log(2, res.data);
+      console.log(4, res);
       new Notice("上传成功");
-      return res.data;
+      return res;
     })
     .catch((err) => {
       console.log(3, err);
@@ -356,42 +344,45 @@ const handleUpdatePost = async ({
 
   // return false;
 
-  return http
-    .request({
-      method: "post",
-      url: url,
-      headers: {
-        Authorization: `Bearer ${token}`,
+  return requestUrl({
+    method: "post",
+    url: url,
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      metadata: {
+        tags: tags,
+        type: "note",
+        title: title,
+        content: content,
+        summary: summary,
+        sources: ["xlog"],
+        date_published: new Date(config.value.publish_time).toISOString(),
+        attributes: [
+          {
+            value: slug,
+            trait_type: "xlog_slug",
+          },
+        ],
+        attachments: [
+          {
+            name: "cover",
+            address: "",
+            mime_type: "",
+          },
+        ],
       },
-      data: {
-        metadata: {
-          tags: tags,
-          type: "note",
-          title: title,
-          content: content,
-          summary: summary,
-          sources: ["xlog"],
-          date_published: new Date(config.value.publish_time).toISOString(),
-          attributes: [
-            {
-              value: slug,
-              trait_type: "xlog_slug",
-            },
-          ],
-          attachments: [
-            {
-              name: "cover",
-              address: "",
-              mime_type: "",
-            },
-          ],
-        },
-        mode,
-      },
+      mode,
+    }),
+  })
+    .then((res) => {
+      return res.json();
     })
     .then((res) => {
       new Notice("更新成功");
-      return res.data;
+      console.log(4, res);
+      // return res.data;
     })
     .catch((err) => {
       console.log(3, err);
@@ -448,21 +439,26 @@ const handleSubmit = async ({
     if (!res) {
       return;
     }
-    console.log("创建的 noteID 是", res.data.noteId);
-    numberNoteID = res.data.noteId;
+    // console.log("创建的 noteID 是", res.data.noteId);
+    // numberNoteID = res.data.noteId;
   }
 
-  await props.addOrUpdateFrontMatter({
-    slug: slug,
-    description: summary,
-    // tags 要去掉 post
-    tags: tags.filter((i) => i !== "post"),
-    noteId_x: numberNoteID,
+  await updateFrontMatterByFile(
+    props.file,
+    props.plugin.app,
 
-    create_time: new Date(ctime.value).toLocaleString(),
-    update_time: new Date().toLocaleString(),
-    publish_time: config.value.publish_time,
-  });
+    {
+      slug: slug,
+      description: summary,
+      // tags 要去掉 post
+      tags: tags.filter((i) => i !== "post"),
+      noteId_x: numberNoteID,
+
+      create_time: new Date(ctime.value).toLocaleString(),
+      update_time: new Date().toLocaleString(),
+      publish_time: config.value.publish_time,
+    }
+  );
 
   closeModal();
 };
