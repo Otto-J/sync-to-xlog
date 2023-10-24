@@ -40,6 +40,7 @@ export default defineConfig(({ command }) => {
             await copy("./main.js", dist),
             await copy("./styles.css", dist),
             await copy("./manifest.json", dist),
+            await copy("./.hotreload", dist),
           ]);
           console.log("复制结果到", dist);
         },
@@ -100,6 +101,11 @@ export default defineConfig(({ command }) => {
       // Use root as the output dir
       emptyOutDir: false,
       outDir: ".",
+    },
+    resolve: {
+      alias: {
+        "@": path.resolve(__dirname, "src"),
+      },
     },
   };
 });
