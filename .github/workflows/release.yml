@@ -37,7 +37,4 @@ jobs:
           echo "latest tag: $latest_tag"
 
           zip -r dist.zip main.js manifest.json styles.css
-          ls
-          # gh release create "$latest_tag" \
-           --title="$latest_tag" \
-           main.js styles.css manifest.json dist.zip
+          # gh release create "$latest_tag" --generate-notes main.js styles.css manifest.json dist.zip
