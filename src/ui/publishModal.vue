@@ -149,42 +149,24 @@
 </template>
 <script lang="ts" setup>
 import { computed, nextTick, onMounted, reactive, ref, watchEffect } from "vue";
-import type SyncToXlogPlugin from "@/starterIndex";
-import { Notice, Modal, TFile } from "obsidian";
-import { defaultSettings, handleMarkdownImageToXlog, http } from "../model";
+import { Notice, Modal, TFile, requestUrl, Plugin } from "obsidian";
+import { baseUrl, defaultSettings, handleMarkdownImageToXlog } from "../model";
+import { getFrontMatterByFile, updateFrontMatterByFile } from "@/utils";
+import { defaultConfig } from "./publish.model";
 
-const props = withDefaults(
-  defineProps<{
-    plugin: SyncToXlogPlugin;
-    modal: Modal;
-    file: TFile;
-    addOrUpdateFrontMatter: (frontMatter: any) => void;
-    currentFrontMatter: any;
-  }>(),
-  {
-    currentFrontMatter: () => ({}),
-  }
-);
+const props = defineProps<{
+  plugin: Plugin;
+  modal: Modal;
+  file: TFile;
+}>();
 
 const isLoading = ref(false);
-
-const defaultConfig = () => ({
-  title: "",
-  noteId: "",
-  summary: "",
-  rawTags: "",
-  slug: "",
-  publish_time: "",
-  create_time: "",
-  publishTimeMode: "current" as "current" | "create_time" | "custom",
-  uploadIPFS: true,
-});
 
 const config = ref(defaultConfig());
 
 const closeModal = () => {
   config.value = defaultConfig();
-  props.modal?.close();
+  props.modal.close();
 };
 
 // 弹窗表单
@@ -217,10 +199,15 @@ const checkSettingValidate = (settings: any) => {
 
 // 处理 baseInfo 和 config
 const handleCurrentInfo = async () => {
+  // 临时信息
   baseInfo.title = props.file.basename;
   baseInfo.content = await props.file.vault.cachedRead(props.file);
-  baseInfo.frontMatter = props.currentFrontMatter();
+  baseInfo.frontMatter = await getFrontMatterByFile(
+    props.file,
+    props.plugin.app
+  );
 
+  // 给 xlog 的信息
   config.value.rawTags = baseInfo.frontMatter?.tags?.join(",") || "";
   config.value.slug = baseInfo.frontMatter?.slug || "";
   config.value.summary = baseInfo.frontMatter?.description || "";
@@ -232,12 +219,12 @@ const handleCurrentInfo = async () => {
 
 // 兼容不填写 create_time 的情况
 const ctime = computed(
-  () => baseInfo.frontMatter?.create_time ?? props.file?.stat?.ctime
+  () => baseInfo.frontMatter?.create_time ?? props.file.stat.ctime
 );
 
 onMounted(async () => {
   // 读取配置
-  settings = await props.plugin?.loadData();
+  settings = await props.plugin.loadData();
   const validate = checkSettingValidate(settings);
   if (!validate) {
     return;
@@ -280,57 +267,56 @@ const handleCreatePost = async ({
   slug = "",
   charactorID = "",
 }) => {
-  console.log("handle create post");
-  const url = `/v1/siwe/contract/characters/${charactorID}/notes`;
+  const url = baseUrl + `/v1/siwe/contract/characters/${charactorID}/notes`;
 
   if (config.value.uploadIPFS) {
     // 上传图片到 ipfs
     content = await handleUpload(baseInfo.content);
   }
-  // return false;
 
-  return http
-    .request({
-      method: "put",
-      url: url,
-      headers: {
-        Authorization: `Bearer ${token}`,
+  return requestUrl({
+    method: "put",
+    url: url,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      metadata: {
+        tags: tags,
+        type: "note",
+        title: title,
+        content: content,
+        summary: summary,
+        sources: ["xlog"],
+        // 发布日期
+        date_published: new Date(config.value.publish_time).toISOString(),
+        attributes: [
+          {
+            value: slug,
+            trait_type: "xlog_slug",
+          },
+        ],
+        attachments: [
+          {
+            name: "cover",
+            address: "",
+            mime_type: "",
+          },
+        ],
       },
-      data: {
-        metadata: {
-          tags: tags,
-          type: "note",
-          title: title,
-          content: content,
-          summary: summary,
-          sources: ["xlog"],
-          // 发布日期
-          date_published: new Date(config.value.publish_time).toISOString(),
-          attributes: [
-            {
-              value: slug,
-              trait_type: "xlog_slug",
-            },
-          ],
-          attachments: [
-            {
-              name: "cover",
-              address: "",
-              mime_type: "",
-            },
-          ],
-        },
-        locked: false,
-        linkItemType: null,
-      },
+      locked: false,
+      linkItemType: null,
+    }),
+  })
+    .then(({ json }) => {
+      return json;
     })
     .then((res) => {
-      console.log(2, res.data);
       new Notice("上传成功");
-      return res.data;
+      return res;
     })
     .catch((err) => {
-      console.log(3, err);
       new Notice("上传失败");
       return null;
     });
@@ -345,8 +331,7 @@ const handleUpdatePost = async ({
   charactor = "",
   noteId = "",
 }) => {
-  console.log("handle update post");
-  const url = `/v1/siwe/contract/characters/${charactor}/notes/${noteId}/metadata`;
+  const url = `${baseUrl}/v1/siwe/contract/characters/${charactor}/notes/${noteId}/metadata`;
   const mode = "replace"; //'merge'
 
   if (config.value.uploadIPFS) {
@@ -354,47 +339,47 @@ const handleUpdatePost = async ({
     content = await handleUpload(baseInfo.content);
   }
 
-  // return false;
-
-  return http
-    .request({
-      method: "post",
-      url: url,
-      headers: {
-        Authorization: `Bearer ${token}`,
+  return requestUrl({
+    method: "POST",
+    url: url,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      metadata: {
+        tags: tags,
+        type: "note",
+        title: title,
+        content: content,
+        summary: summary,
+        sources: ["xlog"],
+        date_published: new Date(config.value.publish_time).toISOString(),
+        attributes: [
+          {
+            value: slug,
+            trait_type: "xlog_slug",
+          },
+        ],
+        attachments: [
+          {
+            name: "cover",
+            address: "",
+            mime_type: "",
+          },
+        ],
       },
-      data: {
-        metadata: {
-          tags: tags,
-          type: "note",
-          title: title,
-          content: content,
-          summary: summary,
-          sources: ["xlog"],
-          date_published: new Date(config.value.publish_time).toISOString(),
-          attributes: [
-            {
-              value: slug,
-              trait_type: "xlog_slug",
-            },
-          ],
-          attachments: [
-            {
-              name: "cover",
-              address: "",
-              mime_type: "",
-            },
-          ],
-        },
-        mode,
-      },
+      mode,
+    }),
+  })
+    .then(({ json }) => {
+      return json;
     })
     .then((res) => {
       new Notice("更新成功");
       return res.data;
     })
     .catch((err) => {
-      console.log(3, err);
       new Notice("更新失败");
       return null;
     });
@@ -448,21 +433,26 @@ const handleSubmit = async ({
     if (!res) {
       return;
     }
-    console.log("创建的 noteID 是", res.data.noteId);
-    numberNoteID = res.data.noteId;
+    // console.log("创建的 noteID 是", res.data.noteId);
+    // numberNoteID = res.data.noteId;
   }
 
-  await props.addOrUpdateFrontMatter({
-    slug: slug,
-    description: summary,
-    // tags 要去掉 post
-    tags: tags.filter((i) => i !== "post"),
-    noteId_x: numberNoteID,
+  await updateFrontMatterByFile(
+    props.file,
+    props.plugin.app,
 
-    create_time: new Date(ctime.value).toLocaleString(),
-    update_time: new Date().toLocaleString(),
-    publish_time: config.value.publish_time,
-  });
+    {
+      slug: slug,
+      description: summary,
+      // tags 要去掉 post
+      tags: tags.filter((i) => i !== "post"),
+      noteId_x: numberNoteID,
+
+      create_time: new Date(ctime.value).toLocaleString(),
+      update_time: new Date().toLocaleString(),
+      publish_time: config.value.publish_time,
+    }
+  );
 
   closeModal();
 };

@@ -1,12 +1,13 @@
 <template>
-  <h1 class="H1">Obsidian Sync Xlog</h1>
-  <h2>这里配置 xlog 基本信息</h2>
-  <div v-if="settings.debugger">{{ settings }}</div>
+  <h2>基础 Basic</h2>
   <!-- enable -->
   <div class="setting-item mod-toggle">
     <div class="setting-item-info">
-      <div class="setting-item-name">启用状态</div>
-      <div class="setting-item-description">若关闭插件不生效</div>
+      <div class="setting-item-name">启用 Enable</div>
+      <div class="setting-item-description">
+        若关闭插件不生效<br />
+        Turn off will disable
+      </div>
     </div>
 
     <div class="setting-item-control">
@@ -18,13 +19,16 @@
       </div>
     </div>
   </div>
+  <h2>xLog</h2>
   <!-- username -->
   <div class="setting-item">
     <div class="setting-item-info">
       <div class="setting-item-name">XLOG SIWE Token</div>
       <div class="setting-item-description">
         如不清楚 Token 请访问
-        <a tabindex="1" href="https://blog.ijust.cc/play-xlog-02">获取帮助</a>
+        <a tabindex="1" href="https://blog.ijust.cc/play-xlog-02"
+          >获取帮助 Get Help</a
+        >
       </div>
     </div>
     <div class="setting-item-control">
@@ -86,21 +90,6 @@
       </div>
     </div>
   </div>
-  <!-- debugger -->
-  <div class="setting-item mod-toggle">
-    <div class="setting-item-info">
-      <div class="setting-item-name">启用 debugger</div>
-      <div class="setting-item-description">开发问题排查</div>
-    </div>
-    <div class="setting-item-control">
-      <div
-        class="checkbox-container"
-        :class="settings.debugger ? 'is-enabled' : ''"
-      >
-        <input type="checkbox" v-model="settings.debugger" tabindex="6" />
-      </div>
-    </div>
-  </div>
 
   <div class="setting-item-control" style="margin-top: 18px">
     <button @click="settings = defaultSettings()">重置配置</button>
@@ -108,19 +97,14 @@
   </div>
 </template>
 <script lang="ts" setup>
-import { Notice } from "obsidian";
+import { Notice, Plugin, requestUrl } from "obsidian";
 import { onMounted, ref, watchEffect } from "vue";
-import type SyncToXlogPlugin from "@/starterIndex";
-import { defaultSettings, http } from "../model";
+import { baseUrl, defaultSettings } from "../model";
+import { commonGet } from "@/utils";
 
-const props = withDefaults(
-  defineProps<{
-    plugin: SyncToXlogPlugin | undefined;
-  }>(),
-  {
-    plugin: undefined,
-  }
-);
+const props = defineProps<{
+  plugin: Plugin;
+}>();
 
 const settings = ref(defaultSettings());
 
@@ -133,9 +117,7 @@ const save = async () => {
     // ...currentSetting.value,
     ...settings.value,
   };
-  // currentSetting.value = newSeeting;
-  await props.plugin?.saveData(newSeeting);
-  console.log("save");
+  await props.plugin.saveData(newSeeting);
   new Notice("保存成功");
 };
 
@@ -145,46 +127,41 @@ const connectTest = () => {
     new Notice("token 不能为空");
     return;
   }
-  http
-    .request({
-      url: "/v1/siwe/account",
-      method: "get",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+
+  const url = baseUrl + "/v1/siwe/account";
+
+  requestUrl(commonGet(url, token))
+    .then(({ json }) => {
+      return json;
     })
-    .then((res) => {
-      return res.data.address;
+    .then(({ address }) => {
+      return address;
     })
     .then((address) => {
-      console.log(2, address);
-      return http.request({
-        url: `/v1/addresses/${address}/characters`,
-        method: "get",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      // console.log("1,address", address);
+      const url = `${baseUrl}/v1/addresses/${address}/characters`;
+      return requestUrl(commonGet(url, token));
     })
-    .then((res) => {
-      console.log(3, res.data);
-      if (res.data.count > 1) {
-        new Notice("当前 token 下有多个角色，请在 Charactor ID 中手动选择");
+    .then(({ json }) => {
+      return json;
+    })
+    .then((data) => {
+      // console.log(3, data);
+      if (data.count > 1) {
+        new Notice("连接成功，请在下方 Charactor ID 中进行角色选择");
       } else {
-        settings.value.charactorID = res.data.list[0].characterId;
+        settings.value.charactorID = data.list[0].characterId;
       }
 
-      settings.value.isMultiCharactor = res.data.count > 1;
-      settings.value.charactorList = res.data.list.map((item: any) => {
+      settings.value.isMultiCharactor = data.count > 1;
+      settings.value.charactorList = data.list.map((item: any) => {
         return {
           name: `${item.handle}(${item.characterId})`,
           value: item.characterId,
         };
       });
-      new Notice("连接成功");
     })
     .catch((err) => {
-      console.error(err);
       new Notice("连接失败" + err.message);
     });
 };

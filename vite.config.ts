@@ -14,7 +14,7 @@ const env = dotenv.config();
 dotenvExpand.expand(env);
 
 export default defineConfig(({ command }) => {
-  const isProd = command === "build";
+  const isProd = command === "build"; // always true
   return {
     plugins: [
       vue(),
@@ -40,6 +40,7 @@ export default defineConfig(({ command }) => {
             await copy("./main.js", dist),
             await copy("./styles.css", dist),
             await copy("./manifest.json", dist),
+            await copy("./.hotreload", dist),
           ]);
           console.log("复制结果到", dist);
         },
@@ -49,6 +50,7 @@ export default defineConfig(({ command }) => {
       // 都是 electron 了怕啥
       target: "esnext",
       sourcemap: false,
+      // sourcemap: "inline",
       // sourcemap: isProd ? false : "inline",
       minify: isProd,
       commonjsOptions: {
@@ -100,6 +102,11 @@ export default defineConfig(({ command }) => {
       // Use root as the output dir
       emptyOutDir: false,
       outDir: ".",
+    },
+    resolve: {
+      alias: {
+        "@": path.resolve(__dirname, "src"),
+      },
     },
   };
 });

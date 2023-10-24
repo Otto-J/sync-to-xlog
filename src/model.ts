@@ -1,10 +1,6 @@
-import axios from "axios";
 import { Notice, Plugin, requestUrl } from "obsidian";
+import { ipfsUploadFile } from "crossbell/ipfs";
 
-export const http = axios.create({
-  baseURL: "https://indexer.crossbell.io",
-  timeout: 30 * 1000,
-});
 export const handleFileToXlog = () => {};
 
 export const defaultSettings = () => ({
@@ -17,22 +13,7 @@ export const defaultSettings = () => ({
   charactorList: [] as Array<{ name: string; value: string }>,
 });
 
-const uploadImageToIPFS = async (blob: Blob) => {
-  // 后续如果上传图片失败，需要关注原始代码是否变化，目前没有鉴权还是需要注意的
-  //github.com/Crossbell-Box/xLog/blob/dev/src/lib/upload-file.ts#L1
-  // form xlog source src/lib/upload-file.ts
-  const formData = new FormData();
-  formData.append("file", blob);
-
-  // 接口默认读缓存，多次上传返回相同结果
-  const response = await fetch(
-    "https://ipfs-relay.crossbell.io/upload?gnfd=t",
-    { method: "POST", body: formData }
-  );
-  return {
-    ipfs: (await response.json()).url as string,
-  };
-};
+export const baseUrl = "https://indexer.crossbell.io";
 
 const handleRemoteUrl = async (alt: string, url: string) => {
   console.log("handleRemoteUrl", url, alt);
@@ -42,13 +23,15 @@ const handleRemoteUrl = async (alt: string, url: string) => {
       url: url,
       method: "GET",
     });
-    const buf = await response.arrayBuffer;
+    const buf = response.arrayBuffer;
     const type = response.headers["content-type"];
 
     const blob = new Blob([buf], {
       type,
     });
-    const ipfs = (await uploadImageToIPFS(blob)).ipfs;
+    const ipfs = (await ipfsUploadFile(blob)).url;
+    // console.log("upload ipfs", ipfs);
+
     // 上传成功 toast
 
     return {
@@ -75,7 +58,6 @@ const handleLocalUrl = async (obUrl: string, plugin: Plugin) => {
       new Notice(`Failed upload ${obUrl}, 文件不存在`);
       return;
     }
-    console.log("find ob local file");
 
     const conArrayBuffer = await plugin.app.vault.readBinary(obInnerFile);
     // 转成二进制，通过 post 上传
@@ -83,8 +65,8 @@ const handleLocalUrl = async (obUrl: string, plugin: Plugin) => {
       type: "image/" + obInnerFile.extension,
     });
     // 测试上传一个图片
-    const ipfs = (await uploadImageToIPFS(blob)).ipfs;
-    console.log("upload ipfs", ipfs);
+    const ipfs = (await ipfsUploadFile(blob)).url;
+    // console.log("upload ipfs", ipfs);
     return {
       originalMarkdown: `![[${obUrl}]]`,
       newMarkdown: `![${obInnerFile.basename}](${ipfs})`,
