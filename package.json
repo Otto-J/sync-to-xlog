@@ -1,7 +1,7 @@
 {
   "name": "sync-to-xlog",
   "version": "0.2.1",
-  "description": "A plugin for Obsidian.md to sync xlog.app",
+  "description": "Publish your obsidian file to xlog.app",
   "main": "main.js",
   "scripts": {
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
@@ -10,11 +10,11 @@
     "dev2": " vite build --watch",
     "build": "npm run type-check && vite build  ",
     "format": "prettier --write src/",
-    "bumpversion": "node version-bump.mjs && git add manifest.json versions.json",
+    "updateVersion": "tsx scripts/updateVersion.ts",
     "pub": "zip -r dist.zip main.js manifest.json styles.css && gh release create 0.2.0 main.js styles.css manifest.json dist.zip "
   },
   "keywords": [],
-  "author": "Otto",
+  "author": "Otto-J@github",
   "homepage": "https://github.com/Otto-J/Obsidian-sync-xlog",
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.5.1",
