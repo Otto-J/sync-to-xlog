@@ -14,10 +14,14 @@ An Obsidian plugin that syncs notes to xlog.app.
 ![](./assets/Snipaste_2023-10-17_11-36-19.png)
 
 ## 安装
+### 通过社区插件市场安装
 
-目前本插件尚未通过 obsidian 官方上线，可以通过 BRAT 安装（类似于 iOS TestFlight），或者手动安装
+目前本插件已经通过 obsidian 官方上线，可以直接在第三方插件搜索xlog。
+![image](https://github.com/Otto-J/sync-to-xlog/assets/24500520/3785dec9-d77b-4f8a-8ef4-a9e5be41727f)
 
-### 通过 BRAT 安装（推荐）
+也可以通过 BRAT 安装（类似于 iOS TestFlight），或者手动安装
+
+### 通过 BRAT 安装
 
 打开设置 - 第三方插件 - 浏览 - 搜索 brat，下载安装并启用。
 
